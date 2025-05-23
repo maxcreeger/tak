@@ -18,34 +18,29 @@ import javax.swing.JPanel
 import kotlin.math.min
 
 class TakBoardPanel(
-    uiState: UIState,
+    private val uiState: UIState,
 ) : JPanel(), GraphicalInterface by GraphicalInterfaceImpl() {
-
-    companion object {
-        private const val NB_ROWS = 10 // 8 cols + 1 row num + 1 row messages
-        private const val NB_COLS = 9 // 8 files + letter display
-    }
 
     init {
         isOpaque = true
         background = Color.black
-        add(BoardBackGround)
-        add(AvailableMoves(uiState))
+        add(BoardBackGround(uiState.board::size))
+        add(AvailableMoves(uiState)) // black
         add(BoardMessage(1, 10, true) { "${uiState.board.activePlayer} to play" })
         add(PieceDisplay(uiState))
-        minimumSize = Dimension(MIN_SCALE * NB_COLS, MIN_SCALE * NB_ROWS)
-        preferredSize = Dimension(DEFAULT_SCALE * NB_COLS, DEFAULT_SCALE * NB_ROWS)
-        maximumSize = Dimension(MAX_SCALE * NB_COLS, MAX_SCALE * NB_ROWS)
+        minimumSize = Dimension(MIN_SCALE * (uiState.board.size + 2), MIN_SCALE * (uiState.board.size + 2))
+        preferredSize = Dimension(DEFAULT_SCALE * (uiState.board.size + 2), DEFAULT_SCALE * (uiState.board.size + 2))
+        maximumSize = Dimension(MAX_SCALE * (uiState.board.size + 2), MAX_SCALE * (uiState.board.size + 2))
     }
 
     override fun paintComponent(g: Graphics) {
         super.paintComponent(g)
-        paintDrawables(g, UpdateContext(scale()))
+        paintDrawables(g, UpdateContext(scale(), null))
     }
 
     private fun scale(): Int = min(
-        size.height / NB_ROWS,
-        size.width / NB_COLS
+        size.height / (uiState.board.size + 2),
+        size.width / (uiState.board.size + 2)
     ).coerceIn(MIN_SCALE, MAX_SCALE)
 
     fun addTileClickListener(listener: TileClickListener) {

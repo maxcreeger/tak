@@ -21,7 +21,8 @@ class Display {
     private val frame: JFrame
     private val uiState: UIState
     private val takBoardPanel: TakBoardPanel
-    private val remainingPiecesPanel: RemainingPiecesPanel
+    private val remainingPiecesPanelWhite: RemainingPiecesPanel
+    private val remainingPiecesPanelBlack: RemainingPiecesPanel
     private val broker: BoardController
     private val menuBar: GameMenu
 
@@ -32,20 +33,29 @@ class Display {
 
     init { // Create views ============================================
         // Construct JFrame
-        frame = JFrame("Chessy")
-        // Chess Board
+        frame = JFrame("Tak")
+        // Board
         takBoardPanel = TakBoardPanel(this.uiState)
-        // Promotion Panel
-        remainingPiecesPanel = RemainingPiecesPanel(this.uiState)
-        val gluedProm = JPanel()
-        gluedProm.add(remainingPiecesPanel)
-        gluedProm.add(Box.createVerticalGlue())
+        // Remaining Panels
+        remainingPiecesPanelWhite = RemainingPiecesPanel(this.uiState, true)
+        remainingPiecesPanelBlack = RemainingPiecesPanel(this.uiState, false)
+
+        // Layout
+        val gluedWhite = JPanel().also {
+            it.add(remainingPiecesPanelWhite)
+            it.add(Box.createVerticalGlue())
+        }
+        val gluedBlack = JPanel().also {
+            it.add(remainingPiecesPanelBlack)
+            it.add(Box.createVerticalGlue())
+        }
 
         // ContentPane & layout
         val contentPane = frame.contentPane
         contentPane.layout = BoxLayout(contentPane, BoxLayout.X_AXIS)
+        contentPane.add(gluedWhite)
         contentPane.add(takBoardPanel)
-        contentPane.add(gluedProm)
+        contentPane.add(gluedBlack)
     }
 
     init { // Create Controllers ======================================
@@ -56,7 +66,8 @@ class Display {
     init { // Give control over UI ====================================
         takBoardPanel.addTileClickListener(broker)
         takBoardPanel.addTileMotionListener(broker)
-        remainingPiecesPanel.addPlacementListener(broker)
+        remainingPiecesPanelWhite.addPlacementListener(broker)
+        remainingPiecesPanelBlack.addPlacementListener(broker)
 
         // Show
         frame.defaultCloseOperation = JFrame.EXIT_ON_CLOSE
