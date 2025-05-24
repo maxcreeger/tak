@@ -1,10 +1,6 @@
 package org.marmotte.tak.controller
 
-import org.marmotte.tak.display.PromotionListener
-import org.marmotte.tak.display.TileClickListener
-import org.marmotte.tak.display.TileMotionListener
-import org.marmotte.tak.display.parts.PromotionEvent
-import org.marmotte.tak.display.parts.TileEvent
+import org.marmotte.tak.display.events.*
 import org.marmotte.tak.engine.*
 import org.marmotte.tak.gameplay.UIState
 import javax.swing.JFrame
@@ -12,26 +8,60 @@ import javax.swing.JFrame
 class BoardController(
     private val uiState: UIState,
     private val frame: JFrame,
-) : TileClickListener, TileMotionListener, PromotionListener {
+) {
+
+    private var selected: Piece? = null
 
     @Synchronized
-    override fun onMove(tileEvent: TileEvent) {
-        if (tileEvent.row !in 0..5 || tileEvent.file !in 0..5) {
+    fun onHover(hoverEvent: HoverEvent) {
+        if (hoverEvent.row !in 0..5 || hoverEvent.file !in 0..5) {
             uiState.setHover(null)
         } else {
-            uiState.setHover(Pos(tileEvent.row, tileEvent.file))
+            uiState.setHover(Pos(hoverEvent.row, hoverEvent.file))
         }
         frame.repaint()
     }
 
     @Synchronized
-    override fun onClick(tileEvent: PromotionEvent) {
+    fun onSelect(selectEvent: SelectReserveTileEvent) {
+        if(selectEvent.player != uiState.board.activePlayer) return
+        frame.repaint()
+    }
+
+    @Synchronized
+    fun onSelect(selectEvent: SelectReserveCapStoneEvent) {
+        if(selectEvent.player != uiState.board.activePlayer) return
         //TODO
         frame.repaint()
     }
 
     @Synchronized
-    override fun onClick(tileEvent: TileEvent) {
+    fun onSelect(selectEvent: SelectTowerEvent) {
+        if(selectEvent.player != uiState.board.activePlayer) return
+        //TODO
+        frame.repaint()
+    }
+
+    @Synchronized
+    fun onDeselect(deselectEvent: DeselectEvent) {
+        //TODO
+        frame.repaint()
+    }
+
+    @Synchronized
+    fun onPlaceRoad(placeRoadEvent: PlaceRoadEvent) {
+        //TODO
+        frame.repaint()
+    }
+
+    @Synchronized
+    fun onPlaceWall(placeWallEvent: PlaceWallEvent) {
+        //TODO
+        frame.repaint()
+    }
+
+    @Synchronized
+    fun onPlaceCapStone(placeCapStoneEvent: PlaceCapStoneEvent) {
         //TODO
         frame.repaint()
     }

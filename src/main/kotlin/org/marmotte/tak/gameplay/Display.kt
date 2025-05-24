@@ -64,10 +64,9 @@ class Display {
     }
 
     init { // Give control over UI ====================================
-        takBoardPanel.addTileClickListener(broker)
-        takBoardPanel.addTileMotionListener(broker)
-        remainingPiecesPanelWhite.addPlacementListener(broker)
-        remainingPiecesPanelBlack.addPlacementListener(broker)
+        takBoardPanel.addBoardController(broker)
+        remainingPiecesPanelWhite.addBoardController(broker)
+        remainingPiecesPanelBlack.addBoardController(broker)
 
         // Show
         frame.defaultCloseOperation = JFrame.EXIT_ON_CLOSE

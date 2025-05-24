@@ -7,18 +7,9 @@ import java.awt.Graphics2D
 
 class Board(val size: Int) : Drawable {
 
-    companion object {
-        fun startingPieces(player: Boolean): List<Piece> = mutableListOf<Piece>().also {
-            for (i in 0..10) {
-                it.add(Road(player))
-            }
-            it.add(CapStone(player))
-        }
-    }
-
     var activePlayer: Boolean = true
-    val whiteReserve: List<Piece> = startingPieces(true)
-    val blackReserve: List<Piece> = startingPieces(false)
+    val whiteReserve: Reserve = Reserve(true)
+    val blackReserve: Reserve = Reserve(false)
 
     private val board: List<List<Tower>> = List(size) { x ->
         List(size) { y ->
@@ -27,7 +18,7 @@ class Board(val size: Int) : Drawable {
     }
     val status: GameStatus = GameStatus.ACTIVE // TODO
 
-    fun reserveOf(player: Boolean): List<Piece> = if (player) whiteReserve else blackReserve
+    fun reserveOf(player: Boolean): Reserve = if (player) whiteReserve else blackReserve
 
     fun generateLegalMovesFrom(selected: Pos): List<Move> {
         return emptyList() // TODO

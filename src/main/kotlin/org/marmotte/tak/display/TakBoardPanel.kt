@@ -1,8 +1,12 @@
 package org.marmotte.tak.display
 
+import org.marmotte.tak.controller.BoardController
 import org.marmotte.tak.display.drawables.GraphicalInterface
 import org.marmotte.tak.display.drawables.GraphicalInterfaceImpl
 import org.marmotte.tak.display.drawables.UpdateContext
+import org.marmotte.tak.display.events.SelectionListener
+import org.marmotte.tak.display.events.ClickEvent
+import org.marmotte.tak.display.events.TileMotionListener
 import org.marmotte.tak.display.parts.*
 import org.marmotte.tak.gameplay.Display.Companion.DEFAULT_SCALE
 import org.marmotte.tak.gameplay.Display.Companion.MAX_SCALE
@@ -43,7 +47,7 @@ class TakBoardPanel(
         size.width / (uiState.board.size + 2)
     ).coerceIn(MIN_SCALE, MAX_SCALE)
 
-    fun addTileClickListener(listener: TileClickListener) {
+    fun addBoardController(boardController: BoardController) {
         addMouseListener(
             object : MouseAdapter() {
                 override fun mousePressed(e: MouseEvent?) {
@@ -52,14 +56,11 @@ class TakBoardPanel(
                     if (e != null) {
                         val row = e.x / scale
                         val file = e.y / scale
-                        listener.onClick(TileEvent(row, file, e))
+                        boardController.onClick(TileEvent(row, file, e))
                     }
                 }
             }
         )
-    }
-
-    fun addTileMotionListener(listener: TileMotionListener) {
         addMouseMotionListener(
             object : MouseMotionAdapter() {
                 override fun mouseMoved(e: MouseEvent?) {
@@ -68,7 +69,7 @@ class TakBoardPanel(
                     if (e != null) {
                         val row = e.x / scale
                         val file = e.y / scale
-                        listener.onMove(TileEvent(row, file, e))
+                        boardController.onMove(TileEvent(row, file, e))
                     }
                 }
             }

@@ -10,7 +10,7 @@ interface Piece {
     val player: Boolean
 }
 
-class Road(override val player: Boolean) : Piece {
+abstract class Tile(override val player: Boolean) : Piece {
 
     companion object {
         const val WIDTH = 0.5
@@ -26,7 +26,11 @@ class Road(override val player: Boolean) : Piece {
             (updateContext.scale * (WIDTH)).toInt(),
             (updateContext.scale * (WIDTH)).toInt()
         )
-        g.color = if (player) ColorScheme.blackPlayer else ColorScheme.whitePlayer
+        g.color = when {
+            this == updateContext.highlightedPiece -> ColorScheme.highlight
+            player -> ColorScheme.blackPlayer
+            else -> ColorScheme.whitePlayer
+        }
         g.drawRect(
             (updateContext.scale * (x - WIDTH / 2)).toInt(),
             (updateContext.scale * (y - WIDTH / 2)).toInt(),
@@ -35,6 +39,10 @@ class Road(override val player: Boolean) : Piece {
         )
     }
 }
+
+class ReserveTile(player: Boolean): Tile(player)
+
+class Road(player: Boolean): Tile(player)
 
 class Wall(override val player: Boolean) : Piece {
 

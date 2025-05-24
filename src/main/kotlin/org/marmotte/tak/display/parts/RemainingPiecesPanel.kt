@@ -1,11 +1,13 @@
 package org.marmotte.tak.display.parts
 
-import org.marmotte.tak.display.PromotionListener
+import org.marmotte.tak.controller.BoardController
 import org.marmotte.tak.display.drawables.Drawable
 import org.marmotte.tak.display.drawables.GraphicalInterface
 import org.marmotte.tak.display.drawables.GraphicalInterfaceImpl
 import org.marmotte.tak.display.drawables.UpdateContext
+import org.marmotte.tak.display.events.*
 import org.marmotte.tak.engine.CapStone
+import org.marmotte.tak.engine.ReserveTile
 import org.marmotte.tak.engine.Road
 import org.marmotte.tak.gameplay.Display.Companion.DEFAULT_SCALE
 import org.marmotte.tak.gameplay.Display.Companion.MAX_SCALE
@@ -22,7 +24,7 @@ import kotlin.math.min
 
 class RemainingPiecesPanel(
     private val uiState: UIState,
-    val color: Boolean,
+    val player: Boolean,
 ) : GraphicalInterface by GraphicalInterfaceImpl(), Drawable, JPanel() {
 
     companion object {
@@ -47,25 +49,39 @@ class RemainingPiecesPanel(
     }
 
     override fun draw(g: Graphics2D, updateContext: UpdateContext) {
-        val reserve = uiState.board.reserveOf(color)
+        g.color = ColorScheme.background.darker()
+        g.fillRect(0, (updateContext.scale * 4.0).toInt(), updateContext.scale, updateContext.scale)
+        val reserve = uiState.board.reserveOf(player)
         reserve
-            .filterIsInstance<Road>()
+            .tiles
             .forEachIndexed { index, piece ->
                 piece.drawAt((index % 5) * 0.05 + 0.45, 3 - (index / 5) * 0.4 - index * 0.2 + 0.5, g, updateContext)
             }
-        reserve.find { it is CapStone }?.drawAt(0.5, 4.5, g, updateContext)
+        reserve.capstone?.drawAt(0.5, 4.5, g, updateContext)
     }
 
-    fun addPlacementListener(listener: PromotionListener) {
+    fun addBoardController(boardController: BoardController) {
         addMouseListener(
             object : MouseAdapter() {
                 override fun mousePressed(e: MouseEvent?) {
                     super.mousePressed(e)
                     val scale = scale()
                     if (e != null) {
-                        val row = e.x / scale
-                        val file = e.y / scale
-                        listener.onClick(PromotionEvent(row, file, e))
+                        val isTile = e.y > scale * 3
+                        val reserve = uiState.board.reserveOf(player)
+                        if (isTile) {
+                            if (reserve.tiles.isNotEmpty()) {
+                                boardController.onSelect(SelectReserveTileEvent(player, e))
+                            } else {
+                                boardController.onDeselect(DeselectEvent(player, e))
+                            }
+                        } else {
+                            if (reserve.capstone != null) {
+                                boardController.onSelect(SelectReserveCapStoneEvent(player, capstone as CapStone, e))
+                            } else {
+                                boardController.onDeselect(DeselectEvent(player, e))
+                            }
+                        }
                     }
                 }
             }
