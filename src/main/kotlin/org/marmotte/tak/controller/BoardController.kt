@@ -10,33 +10,42 @@ class BoardController(
     private val frame: JFrame,
 ) {
 
-    private var selected: Piece? = null
-
     @Synchronized
-    fun onHover(hoverEvent: HoverEvent) {
+    fun onHover(hoverEvent: HoveredTowerEvent) {
         if (hoverEvent.row !in 0..5 || hoverEvent.file !in 0..5) {
             uiState.setHover(null)
         } else {
-            uiState.setHover(Pos(hoverEvent.row, hoverEvent.file))
+            uiState.setHover(hoverEvent.hoveredPiece)
+        }
+        frame.repaint()
+    }
+
+    @Synchronized
+    fun onHover(hoverEvent: HoveredReserveEvent) {
+        if (hoverEvent.hoveredPiece == null) {
+            uiState.setHover(null)
+        } else {
+            uiState.setHover(hoverEvent.hoveredPiece)
         }
         frame.repaint()
     }
 
     @Synchronized
     fun onSelect(selectEvent: SelectReserveTileEvent) {
-        if(selectEvent.player != uiState.board.activePlayer) return
+        if(selectEvent.reserveTile.player != uiState.board.activePlayer) return
+        uiState.setSelectedStack(StackOfReserveTile(selectEvent.reserveTile))
         frame.repaint()
     }
 
     @Synchronized
     fun onSelect(selectEvent: SelectReserveCapStoneEvent) {
         if(selectEvent.player != uiState.board.activePlayer) return
-        //TODO
+        uiState.setSelectedStack(StackOfReserveCapStone(selectEvent.capStone))
         frame.repaint()
     }
 
     @Synchronized
-    fun onSelect(selectEvent: SelectTowerEvent) {
+    fun onSelect(selectEvent: SelectStackEvent) {
         if(selectEvent.player != uiState.board.activePlayer) return
         //TODO
         frame.repaint()
@@ -49,19 +58,7 @@ class BoardController(
     }
 
     @Synchronized
-    fun onPlaceRoad(placeRoadEvent: PlaceRoadEvent) {
-        //TODO
-        frame.repaint()
-    }
-
-    @Synchronized
-    fun onPlaceWall(placeWallEvent: PlaceWallEvent) {
-        //TODO
-        frame.repaint()
-    }
-
-    @Synchronized
-    fun onPlaceCapStone(placeCapStoneEvent: PlaceCapStoneEvent) {
+    fun onPlaceStack(placeStackEvent: PlaceStackEvent) {
         //TODO
         frame.repaint()
     }

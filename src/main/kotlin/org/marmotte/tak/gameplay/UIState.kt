@@ -2,17 +2,19 @@ package org.marmotte.tak.gameplay
 
 import org.marmotte.tak.engine.Board
 import org.marmotte.tak.engine.MoveOutcome
+import org.marmotte.tak.engine.Piece
 import org.marmotte.tak.engine.Pos
+import org.marmotte.tak.engine.Stack
 
 class UIState {
 
     var board: Board = Board(5)
         private set
 
-    var hoveredEnemyPiece: Pos? = null
+    var hoveredPiece: Piece? = null
         private set
 
-    var pieceSelected: Pos? = null
+    var selectedStack: Stack? = null
         private set
 
     var isDrawRequestedOnNextMove: Boolean = false
@@ -27,8 +29,8 @@ class UIState {
             return
         }
         board = outcome.new
-        hoveredEnemyPiece = null
-        pieceSelected = null
+        hoveredPiece = null
+        selectedStack = null
         isDrawRequestedOnNextMove = false
         moveListeners.forEach { it(outcome) }
     }
@@ -37,12 +39,12 @@ class UIState {
         board = Board(5)
     }
 
-    fun setHover(pos: Pos?) {
-        hoveredEnemyPiece = pos
+    fun setHover(piece: Piece?) {
+        hoveredPiece = piece
     }
 
-    fun select(pos: Pos?) {
-        pieceSelected = pos
+    fun setSelectedStack(stack: Stack?) {
+        selectedStack = stack
     }
 
     fun addIllegalMoveListener(action: (MoveOutcome) -> Unit) {

@@ -5,20 +5,21 @@ import org.marmotte.tak.display.drawables.Drawable
 import org.marmotte.tak.display.drawables.GraphicalInterface
 import org.marmotte.tak.display.drawables.GraphicalInterfaceImpl
 import org.marmotte.tak.display.drawables.UpdateContext
-import org.marmotte.tak.display.events.*
+import org.marmotte.tak.display.events.DeselectEvent
+import org.marmotte.tak.display.events.HoveredReserveEvent
+import org.marmotte.tak.display.events.SelectReserveCapStoneEvent
+import org.marmotte.tak.display.events.SelectReserveTileEvent
 import org.marmotte.tak.engine.CapStone
 import org.marmotte.tak.engine.ReserveTile
-import org.marmotte.tak.engine.Road
 import org.marmotte.tak.gameplay.Display.Companion.DEFAULT_SCALE
 import org.marmotte.tak.gameplay.Display.Companion.MAX_SCALE
 import org.marmotte.tak.gameplay.Display.Companion.MIN_SCALE
 import org.marmotte.tak.gameplay.UIState
-import java.awt.Color
-import java.awt.Dimension
-import java.awt.Graphics
-import java.awt.Graphics2D
+import java.awt.*
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
+import java.awt.event.MouseMotionAdapter
+import java.awt.geom.Point2D
 import javax.swing.JPanel
 import kotlin.math.min
 
@@ -30,6 +31,13 @@ class RemainingPiecesPanel(
     companion object {
         private const val NB_ROWS = 5
         private const val NB_COLS = 1
+        private const val FULL_HEIGHT = 4.0
+        private const val TILE_STAGGER_HEIGHT = 0.1
+        private const val STACK_STAGGER_HEIGHT = 1.0
+        private const val TILE_STAGGER_WIDTH = 0.05
+        private const val TILES_PER_STACK = 5
+        private const val CAPSTONE_POS = 4.0
+
     }
 
     init {
@@ -45,51 +53,90 @@ class RemainingPiecesPanel(
 
     override fun paintComponent(g: Graphics) {
         super.paintComponent(g)
-        paintDrawables(g, UpdateContext(scale(), null))
+        paintDrawables(g, UpdateContext(scale(), uiState.hoveredPiece, uiState.selectedStack))
+    }
+
+    fun getTilePixelPos(index: Int): Point2D.Double {
+        return Point2D.Double(
+            (index % TILES_PER_STACK) * TILE_STAGGER_WIDTH + 0.45,
+            3 - (index / TILES_PER_STACK) * STACK_STAGGER_HEIGHT - (index % TILES_PER_STACK) * TILE_STAGGER_HEIGHT + 0.5,
+        )
     }
 
     override fun draw(g: Graphics2D, updateContext: UpdateContext) {
         g.color = ColorScheme.background.darker()
-        g.fillRect(0, (updateContext.scale * 4.0).toInt(), updateContext.scale, updateContext.scale)
+        g.fillRect(0, (updateContext.scale * FULL_HEIGHT).toInt(), updateContext.scale, updateContext.scale)
         val reserve = uiState.board.reserveOf(player)
-        reserve
-            .tiles
-            .forEachIndexed { index, piece ->
-                piece.drawAt((index % 5) * 0.05 + 0.45, 3 - (index / 5) * 0.4 - index * 0.2 + 0.5, g, updateContext)
-            }
-        reserve.capstone?.drawAt(0.5, 4.5, g, updateContext)
+        reserve.tiles.forEachIndexed { index, piece ->
+            val pixelPos = getTilePixelPos(index)
+            piece.drawAt(pixelPos.x, pixelPos.y, g, updateContext)
+        }
+        reserve.capstone?.drawAt(0.5, CAPSTONE_POS + .5, g, updateContext)
     }
 
     fun addBoardController(boardController: BoardController) {
-        addMouseListener(
-            object : MouseAdapter() {
-                override fun mousePressed(e: MouseEvent?) {
-                    super.mousePressed(e)
-                    val scale = scale()
-                    if (e != null) {
-                        val isTile = e.y > scale * 3
-                        val reserve = uiState.board.reserveOf(player)
-                        if (isTile) {
-                            if (reserve.tiles.isNotEmpty()) {
-                                boardController.onSelect(SelectReserveTileEvent(player, e))
-                            } else {
-                                boardController.onDeselect(DeselectEvent(player, e))
-                            }
+        addMouseListener(object : MouseAdapter() {
+            override fun mousePressed(e: MouseEvent?) {
+                super.mousePressed(e)
+                if (e != null) {
+                    val hoveredTile = getHoveredTile(e.point, scale())
+                    if (hoveredTile != null) {
+                        boardController.onSelect(SelectReserveTileEvent(hoveredTile, e))
+                    } else {
+                        val hoveredCapStone = getHoveredCapstone(e.point, scale())
+                        if (hoveredCapStone != null) {
+                            boardController.onSelect(SelectReserveCapStoneEvent(player, hoveredCapStone, e))
                         } else {
-                            if (reserve.capstone != null) {
-                                boardController.onSelect(SelectReserveCapStoneEvent(player, capstone as CapStone, e))
-                            } else {
-                                boardController.onDeselect(DeselectEvent(player, e))
-                            }
+                            boardController.onDeselect(DeselectEvent(player, e))
                         }
                     }
                 }
             }
-        )
+        })
+        addMouseMotionListener(object : MouseMotionAdapter() {
+            override fun mouseMoved(e: MouseEvent?) {
+                super.mouseMoved(e)
+                if (e != null) {
+                    val hoveredTile = getHoveredTile(e.point, scale())
+                    if (hoveredTile != null) {
+                        boardController.onHover(HoveredReserveEvent(hoveredTile, e))
+                    } else {
+                        val hoveredCapStone = getHoveredCapstone(e.point, scale())
+                        if (hoveredCapStone != null) {
+                            boardController.onHover(HoveredReserveEvent(hoveredCapStone, e))
+                        }
+                    }
+                }
+            }
+        })
+    }
+
+
+    fun getHoveredCapstone(e: Point, scale: Int): CapStone? {
+        val capStone = uiState.board.reserveOf(player).capstone
+        if (capStone != null) {
+            val shape = capStone.getPolygon(0.5, +CAPSTONE_POS + 0.5, scale)
+            if (shape.contains(e)) {
+                return capStone
+            }
+        }
+        return null
+    }
+
+    fun getHoveredTile(e: Point, scale: Int): ReserveTile? {
+        var hoveredPiece: ReserveTile? = null
+        val reserve = uiState.board.reserveOf(player)
+        reserve.tiles.forEachIndexed { index, tile ->
+            val pixelPos = getTilePixelPos(index)
+            val rect = tile.getPolygon(pixelPos.x, pixelPos.y, scale)
+            if (rect.contains(e)) {
+                hoveredPiece = tile
+            }
+        }
+        return hoveredPiece
     }
 
     private fun scale(): Int = min(
-        size.height / NB_ROWS,
-        size.width / NB_COLS
+        size.height / NB_ROWS, size.width / NB_COLS
     ).coerceIn(MIN_SCALE, MAX_SCALE)
 }

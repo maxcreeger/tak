@@ -9,4 +9,5 @@ object ColorScheme {
     var background = Color(118, 150, 86)
     var lines = Color(82, 82, 82)
     var highlight = Color(252, 183, 43)
+    var selected = Color(240, 126, 108)
 }

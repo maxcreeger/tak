@@ -24,8 +24,8 @@ class Board(val size: Int) : Drawable {
         return emptyList() // TODO
     }
 
-    fun pieceAt(tileNum: Pos): Tower {
-        return board[tileNum.x][tileNum.y]
+    fun pieceAt(pos: Pos): Tower? {
+        return board.getOrNull(pos.x)?.getOrNull(pos.y)
     }
 
     fun execute(move: Move): MoveOutcome {
@@ -41,7 +41,7 @@ class Board(val size: Int) : Drawable {
         for (x in 0 until size) {
             for (y in 0 until size) {
                 val tileNum = Pos(x, y)
-                pieceAt(tileNum).draw(g, updateContext)
+                pieceAt(tileNum)?.draw(g, updateContext)
             }
         }
     }
