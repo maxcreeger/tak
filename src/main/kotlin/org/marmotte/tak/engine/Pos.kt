@@ -1,8 +1,8 @@
 package org.marmotte.tak.engine
 
 data class Pos(
-    val x: Int,
-    val y: Int
+    val file: Int,
+    val row: Int
 ) {
-    fun fileLetter(): Char = 'A' + x
+    fun fileLetter(): Char = 'A' + file
 }

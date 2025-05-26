@@ -9,8 +9,8 @@ import org.marmotte.tak.engine.StackOfPartialTower
 import org.marmotte.tak.engine.Tower
 import java.awt.event.MouseEvent
 
-data class HoveredTowerEvent(val file: Int, val row: Int, val hoveredPiece: Piece, val event: MouseEvent)
-data class HoveredReserveEvent(val hoveredPiece: Piece?, val event: MouseEvent)
+data class HoveredTowerEvent(val file: Int, val row: Int, val hoveredStack: StackOfPartialTower, val event: MouseEvent)
+data class HoveredReserveEvent(val hoveredStack: Stack, val event: MouseEvent)
 data class SelectReserveTileEvent(val reserveTile: ReserveTile, val event: MouseEvent)
 data class SelectReserveCapStoneEvent(val player: Boolean, val capStone: CapStone, val event: MouseEvent)
 data class SelectStackEvent(val player: Boolean, val stack: StackOfPartialTower, val event: MouseEvent)

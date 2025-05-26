@@ -28,7 +28,7 @@ sealed interface Piece {
             else -> ColorScheme.blackPlayer
         }
         val drawColor = when {
-            this == updateContext.highlightedPiece -> ColorScheme.highlight
+            updateContext.highlightedStack?.contains(this) ?: false -> ColorScheme.highlight
             player -> ColorScheme.blackPlayer
             else -> ColorScheme.whitePlayer
         }

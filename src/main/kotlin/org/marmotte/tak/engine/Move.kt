@@ -14,18 +14,18 @@ data class PlaceNewRoad(
     val to: Pos,
 ) : Move{
     override fun draw(g: Graphics2D, updateContext: UpdateContext) {
-        Road(player).drawAt(to.x.toDouble(), to.y.toDouble(), g, updateContext)
+        Road(player).drawAt(to.file.toDouble(), to.row.toDouble(), g, updateContext)
         g.color = if (player) ColorScheme.whitePlayer else ColorScheme.blackPlayer
         g.fillRect(
-            (updateContext.scale * (to.x - WIDTH / 2)).toInt(),
-            (updateContext.scale * (to.y - WIDTH / 2)).toInt(),
+            (updateContext.scale * (to.file - WIDTH / 2)).toInt(),
+            (updateContext.scale * (to.row - WIDTH / 2)).toInt(),
             (updateContext.scale * (WIDTH)).toInt(),
             (updateContext.scale * (WIDTH)).toInt()
         )
         g.color = ColorScheme.highlight
         g.drawRect(
-            (updateContext.scale * (to.x - WIDTH / 2)).toInt(),
-            (updateContext.scale * (to.y - WIDTH / 2)).toInt(),
+            (updateContext.scale * (to.file - WIDTH / 2)).toInt(),
+            (updateContext.scale * (to.row - WIDTH / 2)).toInt(),
             (updateContext.scale * (WIDTH)).toInt(),
             (updateContext.scale * (WIDTH)).toInt()
         )
@@ -39,15 +39,15 @@ data class PlaceNewWall(
     override fun draw(g: Graphics2D, updateContext: UpdateContext) {
         g.color = if (player) ColorScheme.whitePlayer else ColorScheme.blackPlayer
         g.fillRect(
-            (updateContext.scale * (to.x - WIDTH / 2)).toInt(),
-            (updateContext.scale * (to.y - WIDTH / 2)).toInt(),
+            (updateContext.scale * (to.file - WIDTH / 2)).toInt(),
+            (updateContext.scale * (to.row - WIDTH / 2)).toInt(),
             (updateContext.scale * (WIDTH)).toInt(),
             (updateContext.scale * (WIDTH)).toInt()
         )
         g.color = ColorScheme.highlight
         g.drawRect(
-            (updateContext.scale * (to.x - WIDTH / 2)).toInt(),
-            (updateContext.scale * (to.y - WIDTH / 2)).toInt(),
+            (updateContext.scale * (to.file - WIDTH / 2)).toInt(),
+            (updateContext.scale * (to.row - WIDTH / 2)).toInt(),
             (updateContext.scale * (WIDTH)).toInt(),
             (updateContext.scale * (WIDTH)).toInt()
         )

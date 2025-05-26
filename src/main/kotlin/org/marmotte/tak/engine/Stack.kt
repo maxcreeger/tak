@@ -18,8 +18,9 @@ data class StackOfReserveCapStone(
 
 data class StackOfPartialTower(
     val tower: Tower,
-    val fromHeight: Int
+    val fromPiece: Piece
 ): Stack{
-    override fun contains(piece: Piece) = tower.pieces().contains(piece)
+    val startHeight = tower.pieces().indexOf(fromPiece)
+    override fun contains(piece: Piece) = tower.pieces().drop(startHeight).contains(piece)
 }
 

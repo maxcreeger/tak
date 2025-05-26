@@ -39,7 +39,7 @@ class TakBoardPanel(
         background = Color.black
         add(BoardBackGround(uiState.board::size))
         add(AvailableMoves(uiState)) // black
-        add(BoardMessage(1, 10, true) { "${uiState.board.activePlayer} to play" })
+        add(BoardMessage(1, 10, true) { "${if (uiState.board.activePlayer) "White" else "Black"} to play" })
         add(PieceDisplay(uiState))
         minimumSize = Dimension(MIN_SCALE * (uiState.board.size + 2), MIN_SCALE * (uiState.board.size + 2))
         preferredSize = Dimension(DEFAULT_SCALE * (uiState.board.size + 2), DEFAULT_SCALE * (uiState.board.size + 2))
@@ -48,7 +48,7 @@ class TakBoardPanel(
 
     override fun paintComponent(g: Graphics) {
         super.paintComponent(g)
-        paintDrawables(g, UpdateContext(scale(), uiState.hoveredPiece, uiState.selectedStack))
+        paintDrawables(g, UpdateContext(scale(), uiState.hoveredStack, uiState.selectedStack))
     }
 
     private fun scale(): Int = min(
@@ -63,27 +63,32 @@ class TakBoardPanel(
                     super.mousePressed(e)
                     val scale = scale()
                     if (e != null) {
-                        val row = e.x / scale
-                        val file = e.y / scale
+                        val file = e.x / scale
+                        val row = e.y / scale
                         when (val stack = uiState.selectedStack) {
                             null -> {
-                                val tower = uiState.board.pieceAt(Pos(row, file)) ?: return
-                                if(tower.pieces().isNotEmpty()) {
-                                    val stack = StackOfPartialTower(
-                                        tower, 0
-                                        /** TODO Compute actual height here */
-                                    )
-                                    boardController.onSelect(SelectStackEvent(uiState.board.activePlayer, stack, e))
+                                val hoveredStack = uiState.board.towers.firstNotNullOfOrNull { tower ->
+                                    tower
+                                        .pieces()
+                                        .filterIndexed { height, piece ->
+                                            val pieceCenter = tower.getPieceCenter(height)
+                                            piece.getPolygon(pieceCenter.x, pieceCenter.y, scale).contains(e.point)
+                                        }
+                                        .lastOrNull()
+                                        ?.let { StackOfPartialTower(tower, it) }
+                                }
+                                if (hoveredStack != null) {
+                                    boardController.onSelect(SelectStackEvent(uiState.board.activePlayer, hoveredStack, e))
                                 }
                             }
 
                             is StackOfPartialTower -> {
                                 val tower = stack.tower
-                                val northSouth = abs(file - tower.pos.x) < abs(row - tower.pos.y)
+                                val northSouth = abs(file - tower.pos.file) < abs(row - tower.pos.row)
                                 val dir = if (northSouth) {
-                                    if (file > tower.pos.x) EAST else WEST
+                                    if (file > tower.pos.file) EAST else WEST
                                 } else {
-                                    if (row > tower.pos.y) SOUTH else NORTH
+                                    if (row > tower.pos.row) SOUTH else NORTH
                                 }
                                 boardController.onPlaceStack(PlaceStackEvent(stack, file, row, dir, e))
                             }
@@ -99,22 +104,37 @@ class TakBoardPanel(
             object : MouseMotionAdapter() {
                 override fun mouseMoved(e: MouseEvent?) {
                     super.mouseMoved(e)
+                    if (e == null) return
                     val scale = scale()
-                    if (e != null) {
-                        val row = e.x / scale
-                        val file = e.y / scale
-                        val tower = uiState.board.pieceAt(Pos(file, row)) ?: return
-                        if(tower.pieces().isEmpty()) {
-                            // TODO show potential move??
-                            return
-                        }
+                    val hoveredStack = uiState.board.towers.firstNotNullOfOrNull { tower ->
+                        tower
+                            .pieces()
+                            .filterIndexed { height, piece ->
+                                val pieceCenter = tower.getPieceCenter(height)
+                                piece.getPolygon(pieceCenter.x, pieceCenter.y, scale).contains(e.point)
+                            }
+                            .lastOrNull()
+                            ?.let { StackOfPartialTower(tower, it) }
+                    }
+                    if (hoveredStack != null) {
                         boardController.onHover(
                             HoveredTowerEvent(
-                                file, row, tower.pieces().last()
-                                /** TODO not necessarily the last one*/
-                                , e
+                                hoveredStack.tower.pos.file,
+                                hoveredStack.tower.pos.row,
+                                hoveredStack,
+                                e
                             )
                         )
+
+                    } else {
+
+                    }
+                    val file = e.x / scale
+                    val row = e.y / scale
+                    val tower = uiState.board.towerAt(Pos(file, row)) ?: return
+                    if (tower.pieces().isEmpty()) {
+                        // TODO show potential move??
+                        return
                     }
                 }
             }

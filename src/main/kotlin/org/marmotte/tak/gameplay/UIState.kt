@@ -11,7 +11,7 @@ class UIState {
     var board: Board = Board(5)
         private set
 
-    var hoveredPiece: Piece? = null
+    var hoveredStack: Stack? = null
         private set
 
     var selectedStack: Stack? = null
@@ -23,13 +23,17 @@ class UIState {
     private val illegalMoveListener = mutableListOf<(MoveOutcome) -> Unit>()
     private val moveListeners = mutableListOf<(MoveOutcome) -> Unit>()
 
+    init {
+        board.randomize()
+    }
+
     fun apply(outcome: MoveOutcome) {
         if (!outcome.isLegal) {
             illegalMoveListener.forEach { it(outcome) }
             return
         }
         board = outcome.new
-        hoveredPiece = null
+        hoveredStack = null
         selectedStack = null
         isDrawRequestedOnNextMove = false
         moveListeners.forEach { it(outcome) }
@@ -39,8 +43,8 @@ class UIState {
         board = Board(5)
     }
 
-    fun setHover(piece: Piece?) {
-        hoveredPiece = piece
+    fun setHover(stack: Stack?) {
+        hoveredStack = stack
     }
 
     fun setSelectedStack(stack: Stack?) {

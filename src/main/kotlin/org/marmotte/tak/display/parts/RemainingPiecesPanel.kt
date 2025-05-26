@@ -11,6 +11,8 @@ import org.marmotte.tak.display.events.SelectReserveCapStoneEvent
 import org.marmotte.tak.display.events.SelectReserveTileEvent
 import org.marmotte.tak.engine.CapStone
 import org.marmotte.tak.engine.ReserveTile
+import org.marmotte.tak.engine.StackOfReserveCapStone
+import org.marmotte.tak.engine.StackOfReserveTile
 import org.marmotte.tak.gameplay.Display.Companion.DEFAULT_SCALE
 import org.marmotte.tak.gameplay.Display.Companion.MAX_SCALE
 import org.marmotte.tak.gameplay.Display.Companion.MIN_SCALE
@@ -53,7 +55,7 @@ class RemainingPiecesPanel(
 
     override fun paintComponent(g: Graphics) {
         super.paintComponent(g)
-        paintDrawables(g, UpdateContext(scale(), uiState.hoveredPiece, uiState.selectedStack))
+        paintDrawables(g, UpdateContext(scale(), uiState.hoveredStack, uiState.selectedStack))
     }
 
     fun getTilePixelPos(index: Int): Point2D.Double {
@@ -99,11 +101,11 @@ class RemainingPiecesPanel(
                 if (e != null) {
                     val hoveredTile = getHoveredTile(e.point, scale())
                     if (hoveredTile != null) {
-                        boardController.onHover(HoveredReserveEvent(hoveredTile, e))
+                        boardController.onHover(HoveredReserveEvent(StackOfReserveTile(hoveredTile), e))
                     } else {
                         val hoveredCapStone = getHoveredCapstone(e.point, scale())
                         if (hoveredCapStone != null) {
-                            boardController.onHover(HoveredReserveEvent(hoveredCapStone, e))
+                            boardController.onHover(HoveredReserveEvent(StackOfReserveCapStone(hoveredCapStone), e))
                         }
                     }
                 }

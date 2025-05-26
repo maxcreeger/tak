@@ -1,7 +1,9 @@
 package org.marmotte.tak.controller
 
 import org.marmotte.tak.display.events.*
-import org.marmotte.tak.engine.*
+import org.marmotte.tak.engine.Move
+import org.marmotte.tak.engine.StackOfReserveCapStone
+import org.marmotte.tak.engine.StackOfReserveTile
 import org.marmotte.tak.gameplay.UIState
 import javax.swing.JFrame
 
@@ -12,42 +14,34 @@ class BoardController(
 
     @Synchronized
     fun onHover(hoverEvent: HoveredTowerEvent) {
-        if (hoverEvent.row !in 0..5 || hoverEvent.file !in 0..5) {
-            uiState.setHover(null)
-        } else {
-            uiState.setHover(hoverEvent.hoveredPiece)
-        }
+        uiState.setHover(hoverEvent.hoveredStack)
         frame.repaint()
     }
 
     @Synchronized
     fun onHover(hoverEvent: HoveredReserveEvent) {
-        if (hoverEvent.hoveredPiece == null) {
-            uiState.setHover(null)
-        } else {
-            uiState.setHover(hoverEvent.hoveredPiece)
-        }
+        uiState.setHover(hoverEvent.hoveredStack)
         frame.repaint()
     }
 
     @Synchronized
     fun onSelect(selectEvent: SelectReserveTileEvent) {
-        if(selectEvent.reserveTile.player != uiState.board.activePlayer) return
+        if (selectEvent.reserveTile.player != uiState.board.activePlayer) return
         uiState.setSelectedStack(StackOfReserveTile(selectEvent.reserveTile))
         frame.repaint()
     }
 
     @Synchronized
     fun onSelect(selectEvent: SelectReserveCapStoneEvent) {
-        if(selectEvent.player != uiState.board.activePlayer) return
+        if (selectEvent.player != uiState.board.activePlayer) return
         uiState.setSelectedStack(StackOfReserveCapStone(selectEvent.capStone))
         frame.repaint()
     }
 
     @Synchronized
     fun onSelect(selectEvent: SelectStackEvent) {
-        if(selectEvent.player != uiState.board.activePlayer) return
-        //TODO
+        if (selectEvent.player != uiState.board.activePlayer) return
+        uiState.setSelectedStack(selectEvent.stack)
         frame.repaint()
     }
 

@@ -4,6 +4,7 @@ import org.marmotte.tak.display.drawables.Drawable
 import org.marmotte.tak.display.drawables.UpdateContext
 import java.awt.BasicStroke
 import java.awt.Graphics2D
+import kotlin.random.Random
 
 class Board(val size: Int) : Drawable {
 
@@ -11,12 +12,27 @@ class Board(val size: Int) : Drawable {
     val whiteReserve: Reserve = Reserve(true)
     val blackReserve: Reserve = Reserve(false)
 
-    private val board: List<List<Tower>> = List(size) { x ->
-        List(size) { y ->
-            Tower(Pos(x, y))
+    /** File then row **/
+    private val board: List<List<Tower>> = List(size) { file ->
+        List(size) { row ->
+            Tower(Pos(file, row))
         }
     }
+
     val status: GameStatus = GameStatus.ACTIVE // TODO
+
+    fun randomize() {
+        for(row in board) {
+            for (tower in row) {
+                for (i in 1..Random.nextInt(3)) {
+                    tower.add(Road(Random.nextBoolean()))
+                }
+                if(tower.pieces().isEmpty() && Random.nextBoolean()) {
+                    tower.add(Wall(Random.nextBoolean()))
+                }
+            }
+        }
+    }
 
     fun reserveOf(player: Boolean): Reserve = if (player) whiteReserve else blackReserve
 
@@ -24,8 +40,8 @@ class Board(val size: Int) : Drawable {
         return emptyList() // TODO
     }
 
-    fun pieceAt(pos: Pos): Tower? {
-        return board.getOrNull(pos.x)?.getOrNull(pos.y)
+    fun towerAt(pos: Pos): Tower? {
+        return board.getOrNull(pos.row)?.getOrNull(pos.file)
     }
 
     fun execute(move: Move): MoveOutcome {
@@ -36,12 +52,14 @@ class Board(val size: Int) : Drawable {
         TODO()
     }
 
+    val towers: List<Tower> = board.flatMap{ it }
+
     override fun draw(g: Graphics2D, updateContext: UpdateContext) {
         g.stroke = BasicStroke(1f)
         for (x in 0 until size) {
             for (y in 0 until size) {
                 val tileNum = Pos(x, y)
-                pieceAt(tileNum)?.draw(g, updateContext)
+                towerAt(tileNum)?.draw(g, updateContext)
             }
         }
     }
