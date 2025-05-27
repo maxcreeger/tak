@@ -20,7 +20,7 @@ data class StackOfPartialTower(
     val tower: Tower,
     val fromPiece: Piece
 ): Stack{
-    val startHeight = tower.pieces().indexOf(fromPiece)
-    override fun contains(piece: Piece) = tower.pieces().drop(startHeight).contains(piece)
+    val startHeight = tower.pieces.indexOf(fromPiece)
+    override fun contains(piece: Piece) = tower.pieces.drop(startHeight).contains(piece)
 }
 

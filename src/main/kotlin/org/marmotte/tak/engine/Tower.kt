@@ -1,16 +1,34 @@
 package org.marmotte.tak.engine
 
-class Tower(val pos: Pos) {
+import kotlin.math.max
 
-    private val tower = mutableListOf<Piece>()
+data class Tower(
+    val pos: Pos,
+    val pieces: List<Piece> = emptyList(),
+) {
 
-    fun pieces(): List<Piece> = tower
-    fun add(piece: Piece) {
-        tower.add(piece)
+    val topPiece: Piece? by lazy {
+        pieces.lastOrNull()
     }
 
-    val owner: Boolean by lazy {
-        pieces().last().player
+    val owner: Boolean? by lazy {
+        topPiece?.player
     }
 
+    fun change(towerChanges: Map<Int, Piece?>): Tower {
+        val newPieces = mutableListOf<Piece>()
+        var stop = false
+        for (height in 0..max(pieces.size, towerChanges.keys.max())) {
+            val newPiece = towerChanges.getOrElse(height) { pieces.getOrNull(height) }
+            if (newPiece != null) {
+                if(stop) {
+                    throw UnsupportedOperationException("Making a tower with holes in it. Current tower: $this changes: $towerChanges")
+                }
+                newPieces.add(newPiece)
+            } else {
+                stop = true
+            }
+        }
+        return Tower(pos, newPieces)
+    }
 }

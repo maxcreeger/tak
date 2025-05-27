@@ -6,7 +6,7 @@ import org.marmotte.tak.engine.Stack
 
 class UIState {
 
-    var board: Board = Board(8)
+    var board: Board = Board.newGame(6)
         private set
 
     var hoveredStack: Stack? = null
@@ -38,7 +38,7 @@ class UIState {
     }
 
     fun newGame() {
-        board = Board(5)
+        board = Board.newGame(5)
     }
 
     fun setHover(stack: Stack?) {

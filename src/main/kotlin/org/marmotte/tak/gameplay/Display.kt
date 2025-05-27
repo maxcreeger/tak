@@ -3,7 +3,7 @@ package org.marmotte.tak.gameplay
 import org.marmotte.tak.controller.BoardController
 import org.marmotte.tak.controller.GameMenu
 import org.marmotte.tak.display.TakBoardPanel
-import org.marmotte.tak.display.parts.RemainingPiecesPanel
+import org.marmotte.tak.display.RemainingPiecesPanel
 import javax.swing.Box
 import javax.swing.BoxLayout
 import javax.swing.JFrame
@@ -15,7 +15,7 @@ class Display {
     companion object {
         const val DEFAULT_SCALE = 50
         const val MIN_SCALE = 20
-        const val MAX_SCALE = 100
+        const val MAX_SCALE = 300
     }
 
     private val frame: JFrame

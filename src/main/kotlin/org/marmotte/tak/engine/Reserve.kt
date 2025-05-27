@@ -3,18 +3,10 @@ package org.marmotte.tak.engine
 class Reserve private constructor(val tiles: List<ReserveTile>, val capstones: List<CapStone>, val player: Boolean) {
 
     companion object {
-        operator fun invoke(player: Boolean, boardSize: Int): Reserve {
-            val (nbStones, nbCapstones) = when (boardSize) {
-                4 -> 15 to 0
-                5 -> 21 to 1
-                6 -> 30 to 1
-                7 -> 40 to 2
-                8 -> 40 to 2
-                else -> throw UnsupportedOperationException()
-            }
+        operator fun invoke(player: Boolean, nbStones: Int, nbCapStones: Int): Reserve {
             return Reserve(
                 List(nbStones) { ReserveTile(player) },
-                List(nbCapstones) { CapStone(player)},
+                List(nbCapStones) { CapStone(player)},
                 player,
             )
         }
@@ -29,5 +21,7 @@ class Reserve private constructor(val tiles: List<ReserveTile>, val capstones: L
         val capstone = capstones.firstOrNull() ?: return null
         return Reserve(tiles, capstones.minus(capstone), player) to capstone
     }
+
+    override fun toString(): String = "Reserve(${player.toPlayerName()}, ${tiles.size} tiles, ${capstones.size} capstones)"
 
 }

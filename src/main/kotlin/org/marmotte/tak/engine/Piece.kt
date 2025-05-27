@@ -53,7 +53,10 @@ sealed class Tile(override val player: Boolean) : Piece {
             (scale * (WIDTH)).toInt()
         ).toPolygon()
     }
+    override fun toString(): String = "${javaClass.simpleName}(${player.toPlayerName()})"
 }
+
+fun Boolean.toPlayerName(): String = if(this) "White" else "Black"
 
 class ReserveTile(player: Boolean) : Tile(player){
     override val piece: PieceType = PieceType.RESERVE

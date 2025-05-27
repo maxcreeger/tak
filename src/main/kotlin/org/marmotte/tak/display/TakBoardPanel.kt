@@ -38,7 +38,7 @@ class TakBoardPanel(
         background = Color.black
         add(BoardBackGround(uiState.board::size))
         add(AvailableMoves(uiState)) // black
-        add(BoardMessage(1, 10, true) { "${if (uiState.board.activePlayer) "White" else "Black"} to play" })
+        add(BoardMessage(1, 10, true) { "${uiState.board.activePlayer.toPlayerName()} to play" })
         add(pieceDisplay)
         minimumSize = Dimension(MIN_SCALE * (uiState.board.size + 2), MIN_SCALE * (uiState.board.size + 2))
         preferredSize = Dimension(DEFAULT_SCALE * (uiState.board.size + 2), DEFAULT_SCALE * (uiState.board.size + 2))
@@ -62,8 +62,8 @@ class TakBoardPanel(
                     super.mousePressed(e)
                     val scale = scale()
                     if (e != null) {
-                        val pos = pieceDisplay.getPos(e, scale)
                         val hoveredStack = findHoveredStack(scale, e)
+                        val pos = hoveredStack?.tower?.pos ?: pieceDisplay.getPos(e, scale)
                         when (val selected = uiState.selectedStack) {
                             null -> // New selection...
                                 if (hoveredStack == null) { // new selection of empty square -> do nothing
@@ -87,17 +87,20 @@ class TakBoardPanel(
                                 }
                             }
 
-                            is StackOfReserveCapStone -> boardController.onMove(generatePlaceCapStoneMove(selected.capStone, pos))
-                            is StackOfReserveTile -> if (e.button == MouseEvent.BUTTON1) {
-                                boardController.onMove(PlaceReserveRoad(uiState.board.activePlayer, pos))
-                            } else {
-                                boardController.onMove(PlaceReserveWall(uiState.board.activePlayer, pos))
+                            is StackOfReserveCapStone -> {
+                                boardController.onMove(generatePlaceCapStoneMove(selected.capStone, pos))
+                            }
+                            is StackOfReserveTile -> {
+                                if (e.button == MouseEvent.BUTTON1) {
+                                    boardController.onMove(PlaceReserveRoad(uiState.board.activePlayer, pos))
+                                } else {
+                                    boardController.onMove(PlaceReserveWall(uiState.board.activePlayer, pos))
+                                }
                             }
                         }
                     }
                 }
-            }
-        )
+            })
         addMouseMotionListener(
             object : MouseMotionAdapter() {
                 override fun mouseMoved(e: MouseEvent?) {
@@ -110,7 +113,7 @@ class TakBoardPanel(
                     } else {
                         val pos = pieceDisplay.getPos(e, scale)
                         val tower = uiState.board.towerAt(pos) ?: return
-                        if (tower.pieces().isEmpty()) {
+                        if (tower.pieces.isEmpty()) {
                             // TODO show potential move if a stack is selected??
                             return
                         }
@@ -123,7 +126,7 @@ class TakBoardPanel(
     private fun findHoveredStack(scale: Int, e: MouseEvent): StackOfPartialTower? {
         val hoveredStack = uiState.board.towers.firstNotNullOfOrNull { tower ->
             tower
-                .pieces()
+                .pieces
                 .filterIndexed { height, piece ->
                     val pieceCenter = pieceDisplay.getPieceCenter(tower, height)
                     piece.getPolygon(pieceCenter.x, pieceCenter.y, scale).contains(e.point)

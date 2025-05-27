@@ -25,7 +25,7 @@ class PieceDisplay(private val uiState: UIState) : Drawable {
 
 
     private fun Tower.draw(g: Graphics2D, updateContext: UpdateContext) {
-        pieces().forEachIndexed { height, piece ->
+        pieces.forEachIndexed { height, piece ->
             val point = getPieceCenter(this, height)
             piece.drawAt(point.x, point.y, g, updateContext)
         }

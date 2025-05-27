@@ -1,4 +1,4 @@
-package org.marmotte.tak.display.parts
+package org.marmotte.tak.display
 
 import org.marmotte.tak.controller.BoardController
 import org.marmotte.tak.display.drawables.Drawable
@@ -9,13 +9,12 @@ import org.marmotte.tak.display.events.DeselectEvent
 import org.marmotte.tak.display.events.HoveredReserveEvent
 import org.marmotte.tak.display.events.SelectReserveCapStoneEvent
 import org.marmotte.tak.display.events.SelectReserveTileEvent
+import org.marmotte.tak.display.parts.ColorScheme
 import org.marmotte.tak.engine.CapStone
 import org.marmotte.tak.engine.ReserveTile
 import org.marmotte.tak.engine.StackOfReserveCapStone
 import org.marmotte.tak.engine.StackOfReserveTile
-import org.marmotte.tak.gameplay.Display.Companion.DEFAULT_SCALE
-import org.marmotte.tak.gameplay.Display.Companion.MAX_SCALE
-import org.marmotte.tak.gameplay.Display.Companion.MIN_SCALE
+import org.marmotte.tak.gameplay.Display
 import org.marmotte.tak.gameplay.UIState
 import java.awt.*
 import java.awt.event.MouseAdapter
@@ -42,10 +41,9 @@ class RemainingPiecesPanel(
     init {
         isOpaque = true
         background = Color.black
-        minimumSize = Dimension(MIN_SCALE * NB_COLS, MIN_SCALE * NB_ROWS)
-        preferredSize = Dimension(DEFAULT_SCALE * NB_COLS, DEFAULT_SCALE * NB_ROWS)
-        maximumSize = Dimension(MAX_SCALE * NB_COLS, MAX_SCALE * NB_ROWS)
-        add(BoardMessage(1, 10, true) { "${uiState.board.activePlayer} to play" })
+        minimumSize = Dimension(Display.Companion.MIN_SCALE * NB_COLS, Display.Companion.MIN_SCALE * NB_ROWS)
+        preferredSize = Dimension(Display.Companion.DEFAULT_SCALE * NB_COLS, Display.Companion.DEFAULT_SCALE * NB_ROWS)
+        maximumSize = Dimension(Display.Companion.MAX_SCALE * NB_COLS, Display.Companion.MAX_SCALE * NB_ROWS)
         add(this as Drawable)
         background = ColorScheme.background
     }
@@ -167,5 +165,5 @@ class RemainingPiecesPanel(
 
     private fun scale(): Int = min(
         size.height / NB_ROWS, size.width / NB_COLS
-    ).coerceIn(MIN_SCALE, MAX_SCALE)
+    ).coerceIn(Display.Companion.MIN_SCALE, Display.Companion.MAX_SCALE)
 }
