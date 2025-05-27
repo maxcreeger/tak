@@ -6,7 +6,7 @@ import java.awt.BasicStroke
 import java.awt.Graphics2D
 import kotlin.random.Random
 
-class Board(val size: Int) : Drawable {
+class Board(val size: Int) {
 
     var activePlayer: Boolean = true
     val whiteReserve: Reserve = Reserve(true)
@@ -53,15 +53,5 @@ class Board(val size: Int) : Drawable {
     }
 
     val towers: List<Tower> = board.flatMap{ it }
-
-    override fun draw(g: Graphics2D, updateContext: UpdateContext) {
-        g.stroke = BasicStroke(1f)
-        for (x in 0 until size) {
-            for (y in 0 until size) {
-                val tileNum = Pos(x, y)
-                towerAt(tileNum)?.draw(g, updateContext)
-            }
-        }
-    }
 
 }

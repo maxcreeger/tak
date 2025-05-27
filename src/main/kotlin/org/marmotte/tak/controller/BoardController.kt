@@ -27,6 +27,7 @@ class BoardController(
     @Synchronized
     fun onSelect(selectEvent: SelectReserveTileEvent) {
         if (selectEvent.reserveTile.player != uiState.board.activePlayer) return
+        println("selecting $selectEvent")
         uiState.setSelectedStack(StackOfReserveTile(selectEvent.reserveTile))
         frame.repaint()
     }
@@ -34,6 +35,7 @@ class BoardController(
     @Synchronized
     fun onSelect(selectEvent: SelectReserveCapStoneEvent) {
         if (selectEvent.player != uiState.board.activePlayer) return
+        println("selecting $selectEvent")
         uiState.setSelectedStack(StackOfReserveCapStone(selectEvent.capStone))
         frame.repaint()
     }
@@ -41,19 +43,39 @@ class BoardController(
     @Synchronized
     fun onSelect(selectEvent: SelectStackEvent) {
         if (selectEvent.player != uiState.board.activePlayer) return
+        println("selecting $selectEvent")
         uiState.setSelectedStack(selectEvent.stack)
         frame.repaint()
     }
 
     @Synchronized
     fun onDeselect(deselectEvent: DeselectEvent) {
-        //TODO
+        uiState.setSelectedStack(null)
+        println("Deselecting $deselectEvent")
         frame.repaint()
     }
 
     @Synchronized
-    fun onPlaceStack(placeStackEvent: PlaceStackEvent) {
-        //TODO
+    fun onPlaceStack(moveStackEvent: MoveStackEvent) {
+        TODO()
+        frame.repaint()
+    }
+
+    @Synchronized
+    fun onPlaceNewRoad(newRoadEvent: PlaceReserveRoadEvent) {
+        TODO()
+        frame.repaint()
+    }
+
+    @Synchronized
+    fun onPlaceNewWall(newWallEvent: PlaceReserveWallEvent) {
+        TODO()
+        frame.repaint()
+    }
+
+    @Synchronized
+    fun onPlaceNewCapStone(newCapStoneEvent: PlaceCapStoneEvent) {
+        TODO()
         frame.repaint()
     }
 

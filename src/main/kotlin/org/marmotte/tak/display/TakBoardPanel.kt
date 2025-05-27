@@ -4,18 +4,13 @@ import org.marmotte.tak.controller.BoardController
 import org.marmotte.tak.display.drawables.GraphicalInterface
 import org.marmotte.tak.display.drawables.GraphicalInterfaceImpl
 import org.marmotte.tak.display.drawables.UpdateContext
-import org.marmotte.tak.display.events.HoveredTowerEvent
-import org.marmotte.tak.display.events.PlaceStackEvent
-import org.marmotte.tak.display.events.SelectStackEvent
+import org.marmotte.tak.display.events.*
 import org.marmotte.tak.display.parts.AvailableMoves
 import org.marmotte.tak.display.parts.BoardBackGround
 import org.marmotte.tak.display.parts.BoardMessage
 import org.marmotte.tak.display.parts.PieceDisplay
+import org.marmotte.tak.engine.*
 import org.marmotte.tak.engine.Dir.*
-import org.marmotte.tak.engine.Pos
-import org.marmotte.tak.engine.StackOfPartialTower
-import org.marmotte.tak.engine.StackOfReserveCapStone
-import org.marmotte.tak.engine.StackOfReserveTile
 import org.marmotte.tak.gameplay.Display.Companion.DEFAULT_SCALE
 import org.marmotte.tak.gameplay.Display.Companion.MAX_SCALE
 import org.marmotte.tak.gameplay.Display.Companion.MIN_SCALE
@@ -34,13 +29,15 @@ class TakBoardPanel(
     private val uiState: UIState,
 ) : JPanel(), GraphicalInterface by GraphicalInterfaceImpl() {
 
+    val pieceDisplay = PieceDisplay(uiState)
+
     init {
         isOpaque = true
         background = Color.black
         add(BoardBackGround(uiState.board::size))
         add(AvailableMoves(uiState)) // black
         add(BoardMessage(1, 10, true) { "${if (uiState.board.activePlayer) "White" else "Black"} to play" })
-        add(PieceDisplay(uiState))
+        add(pieceDisplay)
         minimumSize = Dimension(MIN_SCALE * (uiState.board.size + 2), MIN_SCALE * (uiState.board.size + 2))
         preferredSize = Dimension(DEFAULT_SCALE * (uiState.board.size + 2), DEFAULT_SCALE * (uiState.board.size + 2))
         maximumSize = Dimension(MAX_SCALE * (uiState.board.size + 2), MAX_SCALE * (uiState.board.size + 2))
@@ -63,38 +60,37 @@ class TakBoardPanel(
                     super.mousePressed(e)
                     val scale = scale()
                     if (e != null) {
-                        val file = e.x / scale
-                        val row = e.y / scale
-                        when (val stack = uiState.selectedStack) {
-                            null -> {
-                                val hoveredStack = uiState.board.towers.firstNotNullOfOrNull { tower ->
-                                    tower
-                                        .pieces()
-                                        .filterIndexed { height, piece ->
-                                            val pieceCenter = tower.getPieceCenter(height)
-                                            piece.getPolygon(pieceCenter.x, pieceCenter.y, scale).contains(e.point)
-                                        }
-                                        .lastOrNull()
-                                        ?.let { StackOfPartialTower(tower, it) }
-                                }
-                                if (hoveredStack != null) {
+                        val pos = pieceDisplay.getPos(e, scale)
+                        val hoveredStack = findHoveredStack(scale, e)
+                        when (val selected = uiState.selectedStack) {
+                            null -> // New selection...
+                                if (hoveredStack == null) { // new selection of empty square -> do nothing
+                                    boardController.onDeselect(DeselectEvent(uiState.board.activePlayer, e))
+                                } else if (hoveredStack.tower.owner == uiState.board.activePlayer) { // new selection of Stack -> select it
                                     boardController.onSelect(SelectStackEvent(uiState.board.activePlayer, hoveredStack, e))
+                                } else { // clicked on opponent's tower, not in control -> deselecting
+                                    boardController.onDeselect(DeselectEvent(uiState.board.activePlayer, e))
+                                }
+
+                            is StackOfPartialTower -> { // clicked on an existing stack...
+                                if (selected.tower == hoveredStack?.tower) { // clicked on the same tower...
+                                    if (selected.fromPiece == hoveredStack.fromPiece) { // de-selecting the exact same stack
+                                        boardController.onDeselect(DeselectEvent(uiState.board.activePlayer, e))
+                                    } else { // Changing the selected stack's height
+                                        assert(hoveredStack.tower.owner == uiState.board.activePlayer) // should already have the right owner
+                                        boardController.onSelect(SelectStackEvent(uiState.board.activePlayer, hoveredStack, e))
+                                    }
+                                } else { // moving a stack to an alternate square
+                                    boardController.onPlaceStack(generateMoveStackEvent(selected, pos, e))
                                 }
                             }
 
-                            is StackOfPartialTower -> {
-                                val tower = stack.tower
-                                val northSouth = abs(file - tower.pos.file) < abs(row - tower.pos.row)
-                                val dir = if (northSouth) {
-                                    if (file > tower.pos.file) EAST else WEST
-                                } else {
-                                    if (row > tower.pos.row) SOUTH else NORTH
-                                }
-                                boardController.onPlaceStack(PlaceStackEvent(stack, file, row, dir, e))
+                            is StackOfReserveCapStone -> boardController.onPlaceNewCapStone(generatePlaceCapStoneEvent(selected.capStone, pos, e))
+                            is StackOfReserveTile -> if (e.button == MouseEvent.BUTTON1) {
+                                boardController.onPlaceNewRoad(PlaceReserveRoadEvent(uiState.board.activePlayer, pos, e))
+                            } else {
+                                boardController.onPlaceNewWall(PlaceReserveWallEvent(uiState.board.activePlayer, pos, e))
                             }
-
-                            is StackOfReserveCapStone -> TODO()
-                            is StackOfReserveTile -> TODO()
                         }
                     }
                 }
@@ -106,39 +102,53 @@ class TakBoardPanel(
                     super.mouseMoved(e)
                     if (e == null) return
                     val scale = scale()
-                    val hoveredStack = uiState.board.towers.firstNotNullOfOrNull { tower ->
-                        tower
-                            .pieces()
-                            .filterIndexed { height, piece ->
-                                val pieceCenter = tower.getPieceCenter(height)
-                                piece.getPolygon(pieceCenter.x, pieceCenter.y, scale).contains(e.point)
-                            }
-                            .lastOrNull()
-                            ?.let { StackOfPartialTower(tower, it) }
-                    }
-                    if (hoveredStack != null) {
-                        boardController.onHover(
-                            HoveredTowerEvent(
-                                hoveredStack.tower.pos.file,
-                                hoveredStack.tower.pos.row,
-                                hoveredStack,
-                                e
-                            )
-                        )
-
+                    val hoveredStack = findHoveredStack(scale, e)
+                    if (hoveredStack != null) { // hovered a piece
+                        boardController.onHover(HoveredTowerEvent(hoveredStack.tower.pos, hoveredStack, e))
                     } else {
-
-                    }
-                    val file = e.x / scale
-                    val row = e.y / scale
-                    val tower = uiState.board.towerAt(Pos(file, row)) ?: return
-                    if (tower.pieces().isEmpty()) {
-                        // TODO show potential move??
-                        return
+                        val pos = pieceDisplay.getPos(e, scale)
+                        val tower = uiState.board.towerAt(pos) ?: return
+                        if (tower.pieces().isEmpty()) {
+                            // TODO show potential move if a stack is selected??
+                            return
+                        }
                     }
                 }
             }
         )
+    }
+
+    private fun findHoveredStack(scale: Int, e: MouseEvent): StackOfPartialTower? {
+        val hoveredStack = uiState.board.towers.firstNotNullOfOrNull { tower ->
+            tower
+                .pieces()
+                .filterIndexed { height, piece ->
+                    val pieceCenter = pieceDisplay.getPieceCenter(tower, height)
+                    piece.getPolygon(pieceCenter.x, pieceCenter.y, scale).contains(e.point)
+                }
+                .lastOrNull()
+                ?.let { StackOfPartialTower(tower, it) }
+        }
+        return hoveredStack
+    }
+
+    private fun generateMoveStackEvent(
+        stack: StackOfPartialTower,
+        pos: Pos,
+        e: MouseEvent
+    ): MoveStackEvent {
+        val tower = stack.tower
+        val northSouth = abs(pos.file - tower.pos.file) < abs(pos.row - tower.pos.row)
+        val dir = if (northSouth) {
+            if (pos.file > tower.pos.file) EAST else WEST
+        } else {
+            if (pos.row > tower.pos.row) SOUTH else NORTH
+        }
+        return MoveStackEvent(uiState.board.activePlayer, stack, pos, dir, e)
+    }
+
+    private fun generatePlaceCapStoneEvent(capStone: CapStone, pos: Pos, e: MouseEvent): PlaceCapStoneEvent {
+        return PlaceCapStoneEvent(uiState.board.activePlayer, capStone, pos, e)
     }
 }
 

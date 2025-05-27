@@ -80,16 +80,21 @@ class RemainingPiecesPanel(
         addMouseListener(object : MouseAdapter() {
             override fun mousePressed(e: MouseEvent?) {
                 super.mousePressed(e)
+                val selected = uiState.selectedStack
                 if (e != null) {
                     val hoveredTile = getHoveredTile(e.point, scale())
                     if (hoveredTile != null) {
-                        boardController.onSelect(SelectReserveTileEvent(hoveredTile, e))
+                        if (selected is StackOfReserveTile && hoveredTile == selected.reserveTile) {
+                            boardController.onDeselect(DeselectEvent(uiState.board.activePlayer, e))
+                        } else {
+                            boardController.onSelect(SelectReserveTileEvent(hoveredTile, e))
+                        }
                     } else {
                         val hoveredCapStone = getHoveredCapstone(e.point, scale())
-                        if (hoveredCapStone != null) {
-                            boardController.onSelect(SelectReserveCapStoneEvent(player, hoveredCapStone, e))
-                        } else {
+                        if (hoveredCapStone == null || selected is StackOfReserveCapStone && selected.capStone == hoveredCapStone) {
                             boardController.onDeselect(DeselectEvent(player, e))
+                        } else {
+                            boardController.onSelect(SelectReserveCapStoneEvent(player, hoveredCapStone, e))
                         }
                     }
                 }
