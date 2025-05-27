@@ -6,7 +6,6 @@ import org.marmotte.tak.engine.Pos
 import org.marmotte.tak.engine.Tower
 import org.marmotte.tak.gameplay.UIState
 import java.awt.BasicStroke
-import java.awt.Color
 import java.awt.Graphics2D
 import java.awt.event.MouseEvent
 import java.awt.geom.Point2D

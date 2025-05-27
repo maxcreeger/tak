@@ -56,37 +56,14 @@ class BoardController(
     }
 
     @Synchronized
-    fun onPlaceStack(moveStackEvent: MoveStackEvent) {
-        TODO()
-        frame.repaint()
-    }
-
-    @Synchronized
-    fun onPlaceNewRoad(newRoadEvent: PlaceReserveRoadEvent) {
-        TODO()
-        frame.repaint()
-    }
-
-    @Synchronized
-    fun onPlaceNewWall(newWallEvent: PlaceReserveWallEvent) {
-        TODO()
-        frame.repaint()
-    }
-
-    @Synchronized
-    fun onPlaceNewCapStone(newCapStoneEvent: PlaceCapStoneEvent) {
-        TODO()
-        frame.repaint()
-    }
-
-    private fun executeMove(move: Move) {
-        // Wrap it in a draw proposal (maybe)
+    fun onMove(move: Move) {
         println("Executing $move")
         val result = uiState.board.execute(move)
         if (!result.isLegal) {
             println("Yeah actually $move was not legal")
         } else {
             uiState.apply(result)
+            frame.repaint()
         }
     }
 }

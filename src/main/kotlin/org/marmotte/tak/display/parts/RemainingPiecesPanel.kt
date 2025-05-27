@@ -31,15 +31,12 @@ class RemainingPiecesPanel(
 ) : GraphicalInterface by GraphicalInterfaceImpl(), Drawable, JPanel() {
 
     companion object {
-        private const val NB_ROWS = 5
-        private const val NB_COLS = 1
-        private const val FULL_HEIGHT = 4.0
+        private const val NB_ROWS = 6
+        private const val NB_COLS = 2
         private const val TILE_STAGGER_HEIGHT = 0.1
-        private const val STACK_STAGGER_HEIGHT = 1.0
         private const val TILE_STAGGER_WIDTH = 0.05
         private const val TILES_PER_STACK = 5
-        private const val CAPSTONE_POS = 4.0
-
+        private const val CAPSTONE_POS = NB_ROWS - 1
     }
 
     init {
@@ -59,21 +56,34 @@ class RemainingPiecesPanel(
     }
 
     fun getTilePixelPos(index: Int): Point2D.Double {
+        val rowNum = index / (NB_COLS * TILES_PER_STACK)
+        val colNum = (index / TILES_PER_STACK) % NB_COLS
+        val height = index % TILES_PER_STACK
         return Point2D.Double(
-            (index % TILES_PER_STACK) * TILE_STAGGER_WIDTH + 0.45,
-            3 - (index / TILES_PER_STACK) * STACK_STAGGER_HEIGHT - (index % TILES_PER_STACK) * TILE_STAGGER_HEIGHT + 0.5,
+            0.45 + colNum + height * TILE_STAGGER_WIDTH,
+            CAPSTONE_POS - 0.5 - rowNum - height * TILE_STAGGER_HEIGHT,
+        )
+    }
+
+    fun getCapStonePixelPos(index: Int): Point2D.Double {
+        return Point2D.Double(
+            index + 0.5,
+            CAPSTONE_POS + 0.5,
         )
     }
 
     override fun draw(g: Graphics2D, updateContext: UpdateContext) {
         g.color = ColorScheme.background.darker()
-        g.fillRect(0, (updateContext.scale * FULL_HEIGHT).toInt(), updateContext.scale, updateContext.scale)
+        g.fillRect(0, updateContext.scale * CAPSTONE_POS, updateContext.scale * NB_COLS, updateContext.scale * NB_ROWS)
         val reserve = uiState.board.reserveOf(player)
-        reserve.tiles.forEachIndexed { index, piece ->
+        reserve.tiles.forEachIndexed { index, tile ->
             val pixelPos = getTilePixelPos(index)
-            piece.drawAt(pixelPos.x, pixelPos.y, g, updateContext)
+            tile.drawAt(pixelPos.x, pixelPos.y, g, updateContext)
         }
-        reserve.capstone?.drawAt(0.5, CAPSTONE_POS + .5, g, updateContext)
+        reserve.capstones.forEachIndexed { index, capStone ->
+            val pixelPos = getCapStonePixelPos(index)
+            capStone.drawAt(pixelPos.x, pixelPos.y, g, updateContext)
+        }
     }
 
     fun addBoardController(boardController: BoardController) {
@@ -85,16 +95,16 @@ class RemainingPiecesPanel(
                     val hoveredTile = getHoveredTile(e.point, scale())
                     if (hoveredTile != null) {
                         if (selected is StackOfReserveTile && hoveredTile == selected.reserveTile) {
-                            boardController.onDeselect(DeselectEvent(uiState.board.activePlayer, e))
+                            boardController.onDeselect(DeselectEvent(uiState.board.activePlayer))
                         } else {
-                            boardController.onSelect(SelectReserveTileEvent(hoveredTile, e))
+                            boardController.onSelect(SelectReserveTileEvent(hoveredTile))
                         }
                     } else {
                         val hoveredCapStone = getHoveredCapstone(e.point, scale())
                         if (hoveredCapStone == null || selected is StackOfReserveCapStone && selected.capStone == hoveredCapStone) {
-                            boardController.onDeselect(DeselectEvent(player, e))
+                            boardController.onDeselect(DeselectEvent(player))
                         } else {
-                            boardController.onSelect(SelectReserveCapStoneEvent(player, hoveredCapStone, e))
+                            boardController.onSelect(SelectReserveCapStoneEvent(player, hoveredCapStone))
                         }
                     }
                 }
@@ -106,11 +116,11 @@ class RemainingPiecesPanel(
                 if (e != null) {
                     val hoveredTile = getHoveredTile(e.point, scale())
                     if (hoveredTile != null) {
-                        boardController.onHover(HoveredReserveEvent(StackOfReserveTile(hoveredTile), e))
+                        boardController.onHover(HoveredReserveEvent(StackOfReserveTile(hoveredTile)))
                     } else {
                         val hoveredCapStone = getHoveredCapstone(e.point, scale())
                         if (hoveredCapStone != null) {
-                            boardController.onHover(HoveredReserveEvent(StackOfReserveCapStone(hoveredCapStone), e))
+                            boardController.onHover(HoveredReserveEvent(StackOfReserveCapStone(hoveredCapStone)))
                         }
                     }
                 }
@@ -120,27 +130,39 @@ class RemainingPiecesPanel(
 
 
     fun getHoveredCapstone(e: Point, scale: Int): CapStone? {
-        val capStone = uiState.board.reserveOf(player).capstone
-        if (capStone != null) {
-            val shape = capStone.getPolygon(0.5, +CAPSTONE_POS + 0.5, scale)
-            if (shape.contains(e)) {
-                return capStone
+        return uiState
+            .board
+            .reserveOf(player)
+            .capstones
+            .mapIndexedNotNull { index, capStone ->
+                val pos = getCapStonePixelPos(index)
+                val shape = capStone.getPolygon(pos.x, pos.y, scale)
+                if (shape.contains(e)) {
+                    index to capStone
+                } else {
+                    null
+                }
             }
-        }
-        return null
+            .lastOrNull()
+            ?.second
     }
 
     fun getHoveredTile(e: Point, scale: Int): ReserveTile? {
-        var hoveredPiece: ReserveTile? = null
-        val reserve = uiState.board.reserveOf(player)
-        reserve.tiles.forEachIndexed { index, tile ->
-            val pixelPos = getTilePixelPos(index)
-            val rect = tile.getPolygon(pixelPos.x, pixelPos.y, scale)
-            if (rect.contains(e)) {
-                hoveredPiece = tile
+        return uiState
+            .board
+            .reserveOf(player)
+            .tiles
+            .mapIndexedNotNull { index, tile ->
+                val pixelPos = getTilePixelPos(index)
+                val rect = tile.getPolygon(pixelPos.x, pixelPos.y, scale)
+                if (rect.contains(e)) {
+                    index to tile
+                } else {
+                    null
+                }
             }
-        }
-        return hoveredPiece
+            .lastOrNull()
+            ?.second
     }
 
     private fun scale(): Int = min(

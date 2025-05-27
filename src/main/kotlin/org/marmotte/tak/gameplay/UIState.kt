@@ -2,13 +2,11 @@ package org.marmotte.tak.gameplay
 
 import org.marmotte.tak.engine.Board
 import org.marmotte.tak.engine.MoveOutcome
-import org.marmotte.tak.engine.Piece
-import org.marmotte.tak.engine.Pos
 import org.marmotte.tak.engine.Stack
 
 class UIState {
 
-    var board: Board = Board(5)
+    var board: Board = Board(8)
         private set
 
     var hoveredStack: Stack? = null

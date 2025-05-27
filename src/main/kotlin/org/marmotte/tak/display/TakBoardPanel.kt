@@ -4,7 +4,9 @@ import org.marmotte.tak.controller.BoardController
 import org.marmotte.tak.display.drawables.GraphicalInterface
 import org.marmotte.tak.display.drawables.GraphicalInterfaceImpl
 import org.marmotte.tak.display.drawables.UpdateContext
-import org.marmotte.tak.display.events.*
+import org.marmotte.tak.display.events.DeselectEvent
+import org.marmotte.tak.display.events.HoveredTowerEvent
+import org.marmotte.tak.display.events.SelectStackEvent
 import org.marmotte.tak.display.parts.AvailableMoves
 import org.marmotte.tak.display.parts.BoardBackGround
 import org.marmotte.tak.display.parts.BoardMessage
@@ -65,31 +67,31 @@ class TakBoardPanel(
                         when (val selected = uiState.selectedStack) {
                             null -> // New selection...
                                 if (hoveredStack == null) { // new selection of empty square -> do nothing
-                                    boardController.onDeselect(DeselectEvent(uiState.board.activePlayer, e))
+                                    boardController.onDeselect(DeselectEvent(uiState.board.activePlayer))
                                 } else if (hoveredStack.tower.owner == uiState.board.activePlayer) { // new selection of Stack -> select it
-                                    boardController.onSelect(SelectStackEvent(uiState.board.activePlayer, hoveredStack, e))
+                                    boardController.onSelect(SelectStackEvent(uiState.board.activePlayer, hoveredStack))
                                 } else { // clicked on opponent's tower, not in control -> deselecting
-                                    boardController.onDeselect(DeselectEvent(uiState.board.activePlayer, e))
+                                    boardController.onDeselect(DeselectEvent(uiState.board.activePlayer))
                                 }
 
                             is StackOfPartialTower -> { // clicked on an existing stack...
                                 if (selected.tower == hoveredStack?.tower) { // clicked on the same tower...
                                     if (selected.fromPiece == hoveredStack.fromPiece) { // de-selecting the exact same stack
-                                        boardController.onDeselect(DeselectEvent(uiState.board.activePlayer, e))
+                                        boardController.onDeselect(DeselectEvent(uiState.board.activePlayer))
                                     } else { // Changing the selected stack's height
                                         assert(hoveredStack.tower.owner == uiState.board.activePlayer) // should already have the right owner
-                                        boardController.onSelect(SelectStackEvent(uiState.board.activePlayer, hoveredStack, e))
+                                        boardController.onSelect(SelectStackEvent(uiState.board.activePlayer, hoveredStack))
                                     }
                                 } else { // moving a stack to an alternate square
-                                    boardController.onPlaceStack(generateMoveStackEvent(selected, pos, e))
+                                    boardController.onMove(generateStackMove(selected, pos))
                                 }
                             }
 
-                            is StackOfReserveCapStone -> boardController.onPlaceNewCapStone(generatePlaceCapStoneEvent(selected.capStone, pos, e))
+                            is StackOfReserveCapStone -> boardController.onMove(generatePlaceCapStoneMove(selected.capStone, pos))
                             is StackOfReserveTile -> if (e.button == MouseEvent.BUTTON1) {
-                                boardController.onPlaceNewRoad(PlaceReserveRoadEvent(uiState.board.activePlayer, pos, e))
+                                boardController.onMove(PlaceReserveRoad(uiState.board.activePlayer, pos))
                             } else {
-                                boardController.onPlaceNewWall(PlaceReserveWallEvent(uiState.board.activePlayer, pos, e))
+                                boardController.onMove(PlaceReserveWall(uiState.board.activePlayer, pos))
                             }
                         }
                     }
@@ -104,7 +106,7 @@ class TakBoardPanel(
                     val scale = scale()
                     val hoveredStack = findHoveredStack(scale, e)
                     if (hoveredStack != null) { // hovered a piece
-                        boardController.onHover(HoveredTowerEvent(hoveredStack.tower.pos, hoveredStack, e))
+                        boardController.onHover(HoveredTowerEvent(hoveredStack.tower.pos, hoveredStack))
                     } else {
                         val pos = pieceDisplay.getPos(e, scale)
                         val tower = uiState.board.towerAt(pos) ?: return
@@ -132,11 +134,10 @@ class TakBoardPanel(
         return hoveredStack
     }
 
-    private fun generateMoveStackEvent(
+    private fun generateStackMove(
         stack: StackOfPartialTower,
-        pos: Pos,
-        e: MouseEvent
-    ): MoveStackEvent {
+        pos: Pos
+    ): StackMove {
         val tower = stack.tower
         val northSouth = abs(pos.file - tower.pos.file) < abs(pos.row - tower.pos.row)
         val dir = if (northSouth) {
@@ -144,11 +145,11 @@ class TakBoardPanel(
         } else {
             if (pos.row > tower.pos.row) SOUTH else NORTH
         }
-        return MoveStackEvent(uiState.board.activePlayer, stack, pos, dir, e)
+        return StackMove(uiState.board.activePlayer, stack, pos, dir)
     }
 
-    private fun generatePlaceCapStoneEvent(capStone: CapStone, pos: Pos, e: MouseEvent): PlaceCapStoneEvent {
-        return PlaceCapStoneEvent(uiState.board.activePlayer, capStone, pos, e)
+    private fun generatePlaceCapStoneMove(capStone: CapStone, pos: Pos): PlaceCapStone {
+        return PlaceCapStone(uiState.board.activePlayer, capStone, pos)
     }
 }
 

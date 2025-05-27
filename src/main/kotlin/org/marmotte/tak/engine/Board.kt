@@ -1,16 +1,12 @@
 package org.marmotte.tak.engine
 
-import org.marmotte.tak.display.drawables.Drawable
-import org.marmotte.tak.display.drawables.UpdateContext
-import java.awt.BasicStroke
-import java.awt.Graphics2D
 import kotlin.random.Random
 
 class Board(val size: Int) {
 
     var activePlayer: Boolean = true
-    val whiteReserve: Reserve = Reserve(true)
-    val blackReserve: Reserve = Reserve(false)
+    val whiteReserve: Reserve = Reserve(true, size)
+    val blackReserve: Reserve = Reserve(false, size)
 
     /** File then row **/
     private val board: List<List<Tower>> = List(size) { file ->
@@ -24,7 +20,7 @@ class Board(val size: Int) {
     fun randomize() {
         for(row in board) {
             for (tower in row) {
-                for (i in 1..Random.nextInt(3)) {
+                (1..Random.nextInt(3)).forEach { _ ->
                     tower.add(Road(Random.nextBoolean()))
                 }
                 if(tower.pieces().isEmpty() && Random.nextBoolean()) {
@@ -45,7 +41,7 @@ class Board(val size: Int) {
     }
 
     fun execute(move: Move): MoveOutcome {
-        TODO()
+        return move.applyTo(this)
     }
 
     fun resign(): Move {
