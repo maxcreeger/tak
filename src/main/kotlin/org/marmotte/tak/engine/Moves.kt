@@ -22,13 +22,13 @@ data class StackMove(val player: Boolean, private val stack: Stack, val pos: Pos
             .mapIndexed { height, piece ->
                 val newPos = pos.move(dir, height + 1)
                 val tower = board.towerAt(newPos) ?: return MoveOutcome.illegal(board, this, "Falling outside the board")
-                when(tower.topPiece) {
+                when (tower.topPiece) {
                     null -> newPos to listOf(piece)
                     is CapStone -> return MoveOutcome.illegal(board, this, "Pieces falling onto a CapStone at $newPos")
                     is ReserveTile -> throw UnsupportedOperationException("There should never be a ReserveTile in a Stack")
                     is Road -> newPos to listOf(piece)
                     is Wall -> {
-                        if(piece.piece == CAPSTONE) { // crushing the wall
+                        if (piece.piece == CAPSTONE) { // crushing the wall
                             crushedWall = newPos to tower.pieces.size - 1
                             newPos to listOf(piece)
                         } else {
@@ -40,9 +40,9 @@ data class StackMove(val player: Boolean, private val stack: Stack, val pos: Pos
             .toMap()
         val originalTower = board.towerAt(pos)!!
         val depletedStack = mapOf(pos to originalTower.pieces.indexOf(stack.bottom))
-        val removedTiles = if(crushedWall == null) {
+        val removedTiles = if (crushedWall == null) {
             depletedStack
-        }else {
+        } else {
             depletedStack + crushedWall
         }
         val newBoard = board.change(
@@ -60,7 +60,14 @@ data class PlaceReserveWall(val player: Boolean, val pos: Pos) : Move {
     }
 
     override fun applyTo(board: Board): MoveOutcome {
-        TODO("Not yet implemented")
+        val tower = board.towerAt(pos) ?: return MoveOutcome.illegal(board, this, "Outside board range: $pos, board size is ${board.size}")
+        if (tower.pieces.isNotEmpty()) return MoveOutcome.illegal(board, this, "Board has a non-empty tower at $pos, cannot put a Wall there from the reserve")
+        val newBoard = board.change(
+            emptyMap(),
+            mapOf(pos to listOf(Wall(player))),
+            consumedTile = true
+        )
+        return MoveOutcome(board, this, newBoard)
     }
 }
 
