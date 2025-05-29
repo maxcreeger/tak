@@ -45,8 +45,15 @@ class Board private constructor(
     val whiteReserve: Reserve = Reserve(true, nbReserveTilesWhite, nbReserveCapStonesWhite)
     val blackReserve: Reserve = Reserve(false, nbReserveTilesBlack, nbReserveCapStonesBlack)
 
+    /** Apply th provided changes.
+     * @param towerCut: the [Pos] and height at which to cut off stacks
+     * @param towerAdds: The [Pos] and [Piece]s to add on top of existing stacks
+     * @param consumedTile: if `true`, will use a Tile from the reserve
+     * @param consumedCapStone: if `true`, will use a [CapStone] from the reserve
+     */
     fun change(
-        boardChanges: Map<Pos, Map<Int, Piece>>,
+        towerCut: Map<Pos, Int>,
+        towerAdds: Map<Pos, List<Piece>>,
         consumedTile: Boolean = false,
         consumedCapStone: Boolean = false,
     ): Board {
@@ -54,8 +61,16 @@ class Board private constructor(
             List(size) { row ->
                 val pos = Pos(file, row)
                 var tower = towerAt(pos)!!
-                boardChanges[pos]
-                    ?.let { tower = tower.change(it) }
+                // Trimming the top off first
+                val cut = towerCut[pos]
+                if (cut != null) {
+                    tower = tower.cutFrom(cut)
+                }
+                // Then adding the new pieces
+                val adds = towerAdds[pos]
+                if (adds != null) {
+                    tower = tower.add(adds)
+                }
                 tower
             }
         }
@@ -77,8 +92,8 @@ class Board private constructor(
             for (tower in row) {
                 val nbTiles = Random.nextInt(4) - 1
                 when {
-                    nbTiles < 0 -> tower.change(mapOf(nbTiles to Wall(Random.nextBoolean())))
-                    nbTiles > 0 -> tower.change((0 until nbTiles).associateWith { Road(Random.nextBoolean()) })
+                    nbTiles < 0 -> tower.add(listOf(Wall(Random.nextBoolean())))
+                    nbTiles > 0 -> tower.add(List(nbTiles) { Road(Random.nextBoolean()) })
                 }
             }
         }

@@ -12,7 +12,6 @@ import org.marmotte.tak.display.parts.BoardBackGround
 import org.marmotte.tak.display.parts.BoardMessage
 import org.marmotte.tak.display.parts.PieceDisplay
 import org.marmotte.tak.engine.*
-import org.marmotte.tak.engine.Dir.*
 import org.marmotte.tak.gameplay.Display.Companion.DEFAULT_SCALE
 import org.marmotte.tak.gameplay.Display.Companion.MAX_SCALE
 import org.marmotte.tak.gameplay.Display.Companion.MIN_SCALE
@@ -24,7 +23,6 @@ import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
 import java.awt.event.MouseMotionAdapter
 import javax.swing.JPanel
-import kotlin.math.abs
 import kotlin.math.min
 
 class TakBoardPanel(
@@ -139,16 +137,11 @@ class TakBoardPanel(
 
     private fun generateStackMove(
         stack: StackOfPartialTower,
-        pos: Pos
+        pos: Pos,
     ): StackMove {
         val tower = stack.tower
-        val northSouth = abs(pos.file - tower.pos.file) < abs(pos.row - tower.pos.row)
-        val dir = if (northSouth) {
-            if (pos.file > tower.pos.file) EAST else WEST
-        } else {
-            if (pos.row > tower.pos.row) SOUTH else NORTH
-        }
-        return StackMove(uiState.board.activePlayer, stack, pos, dir)
+        val dir = tower.pos.dirTo(pos)
+        return StackMove(uiState.board.activePlayer, stack, tower.pos, dir)
     }
 
     private fun generatePlaceCapStoneMove(capStone: CapStone, pos: Pos): PlaceCapStone {

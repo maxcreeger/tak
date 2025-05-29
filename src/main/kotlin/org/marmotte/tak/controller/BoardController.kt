@@ -60,7 +60,7 @@ class BoardController(
         println("Executing $move")
         val result = uiState.board.execute(move)
         if (!result.isLegal) {
-            println("Yeah actually $move was not legal")
+            println("Yeah actually $move was not legal because ${result.message}")
         } else {
             uiState.apply(result)
             frame.repaint()
