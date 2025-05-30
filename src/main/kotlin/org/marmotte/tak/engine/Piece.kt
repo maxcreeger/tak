@@ -20,14 +20,15 @@ sealed interface Piece {
     val piece: PieceType
     val player: Boolean
     fun getPolygon(x: Double, y: Double, scale: Int): Polygon
-    fun drawAt(x: Double, y: Double, g: Graphics2D, updateContext: UpdateContext) {
+    fun drawAt(x: Double, y: Double, g: Graphics2D, updateContext: UpdateContext, phantom: Boolean = false) {
         val polygon = getPolygon(x, y, updateContext.scale)
         val fillColor = when {
-            updateContext.selectedStack?.contains(this) ?: false -> ColorScheme.selected
+            !phantom && updateContext.selectedStack?.contains(this)?: false -> ColorScheme.selected
             player -> ColorScheme.whitePlayer
             else -> ColorScheme.blackPlayer
         }
         val drawColor = when {
+            phantom -> ColorScheme.phantom
             updateContext.highlightedStack?.contains(this) ?: false -> ColorScheme.highlight
             player -> ColorScheme.blackPlayer
             else -> ColorScheme.whitePlayer

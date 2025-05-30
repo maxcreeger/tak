@@ -10,36 +10,39 @@ interface Move : Drawable {
 
 }
 
-data class StackMove(val player: Boolean, private val stack: Stack, val pos: Pos, val dir: Dir) : Move {
+data class StackMove(val player: Boolean, private val stack: Stack, val pos: Pos, val dir: Dir, val distrib: List<Int>) : Move {
     override fun draw(g: Graphics2D, updateContext: UpdateContext) {
         TODO("Not yet implemented")
     }
 
     override fun applyTo(board: Board): MoveOutcome {
         var crushedWall: Pair<Pos, Int>? = null
-        val fallenTiles = stack
-            .pieces
-            .mapIndexed { height, piece ->
-                val newPos = pos.move(dir, height + 1)
+        if (distrib.sum() != stack.size) return MoveOutcome.illegal(board, this, "Bad distrib: stack has ${stack.size} pieces, distrib is $distrib")
+        var height = -1
+        val fallenTiles: Map<Pos, List<Piece>> = distrib.mapIndexed { steps, nbTiles -> // move step by step
+            val newPos = pos.move(dir, steps + 1)
+            newPos to (0 until nbTiles).map { // position each tile in that step
+                height++
+                val piece = stack[height]
                 val tower = board.towerAt(newPos) ?: return MoveOutcome.illegal(board, this, "Falling outside the board")
-                when (tower.topPiece) {
-                    null -> newPos to listOf(piece)
+                when (tower.topPiece) { // check receiver must be able to accept the piece
+                    null -> piece
                     is CapStone -> return MoveOutcome.illegal(board, this, "Pieces falling onto a CapStone at $newPos")
                     is ReserveTile -> throw UnsupportedOperationException("There should never be a ReserveTile in a Stack")
-                    is Road -> newPos to listOf(piece)
+                    is Road ->  piece
                     is Wall -> {
                         if (piece.piece == CAPSTONE) { // crushing the wall
                             crushedWall = newPos to tower.pieces.size - 1
-                            newPos to listOf(piece)
+                            piece
                         } else {
                             return MoveOutcome.illegal(board, this, "Pieces falling onto a Wall at $newPos")
                         }
                     }
                 }
             }
-            .toMap()
+        }.toMap()
         val originalTower = board.towerAt(pos)!!
-        val depletedStack = mapOf(pos to originalTower.pieces.indexOf(stack.bottom))
+        val depletedStack = mapOf(pos to originalTower.pieces.indexOf(stack.first()))
         val removedTiles = if (crushedWall == null) {
             depletedStack
         } else {

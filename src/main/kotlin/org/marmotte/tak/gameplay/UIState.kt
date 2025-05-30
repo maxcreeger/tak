@@ -3,6 +3,7 @@ package org.marmotte.tak.gameplay
 import org.marmotte.tak.engine.Board
 import org.marmotte.tak.engine.MoveOutcome
 import org.marmotte.tak.engine.Stack
+import org.marmotte.tak.engine.StackMove
 
 class UIState {
 
@@ -15,8 +16,7 @@ class UIState {
     var selectedStack: Stack? = null
         private set
 
-    var isDrawRequestedOnNextMove: Boolean = false
-        private set
+    var preparedMove: StackMove? = null
 
     private val illegalMoveListener = mutableListOf<(MoveOutcome) -> Unit>()
     private val moveListeners = mutableListOf<(MoveOutcome) -> Unit>()
@@ -33,7 +33,6 @@ class UIState {
         board = outcome.new
         hoveredStack = null
         selectedStack = null
-        isDrawRequestedOnNextMove = false
         moveListeners.forEach { it(outcome) }
     }
 

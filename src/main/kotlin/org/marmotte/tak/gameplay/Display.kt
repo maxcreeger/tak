@@ -2,8 +2,8 @@ package org.marmotte.tak.gameplay
 
 import org.marmotte.tak.controller.BoardController
 import org.marmotte.tak.controller.GameMenu
-import org.marmotte.tak.display.TakBoardPanel
 import org.marmotte.tak.display.RemainingPiecesPanel
+import org.marmotte.tak.display.TakBoardPanel
 import javax.swing.Box
 import javax.swing.BoxLayout
 import javax.swing.JFrame
@@ -30,12 +30,19 @@ class Display {
     init { // create models ===========================================
         uiState = UIState()
     }
+    init { // Construct JFrame ============================================
+        frame = JFrame("Tak")
+    }
+
+    init { // Create Controllers ======================================
+        broker = BoardController(uiState, frame)
+        menuBar = GameMenu(uiState, frame)
+
+    }
 
     init { // Create views ============================================
-        // Construct JFrame
-        frame = JFrame("Tak")
         // Board
-        takBoardPanel = TakBoardPanel(this.uiState)
+        takBoardPanel = TakBoardPanel(this.uiState, broker)
         // Remaining Panels
         remainingPiecesPanelWhite = RemainingPiecesPanel(this.uiState, true)
         remainingPiecesPanelBlack = RemainingPiecesPanel(this.uiState, false)
@@ -58,13 +65,7 @@ class Display {
         contentPane.add(gluedBlack)
     }
 
-    init { // Create Controllers ======================================
-        broker = BoardController(uiState, frame)
-        menuBar = GameMenu(uiState, frame)
-    }
-
     init { // Give control over UI ====================================
-        takBoardPanel.addBoardController(broker)
         remainingPiecesPanelWhite.addBoardController(broker)
         remainingPiecesPanelBlack.addBoardController(broker)
 

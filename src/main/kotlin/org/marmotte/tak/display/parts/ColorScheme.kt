@@ -10,4 +10,5 @@ object ColorScheme {
     var lines = Color(82, 82, 82)
     var highlight = Color(252, 183, 43)
     var selected = Color(240, 126, 108)
+    val phantom = Color(114, 189, 218)
 }
