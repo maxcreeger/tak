@@ -7,7 +7,6 @@ import org.marmotte.tak.display.drawables.UpdateContext
 import org.marmotte.tak.display.events.DeselectEvent
 import org.marmotte.tak.display.events.HoveredTowerEvent
 import org.marmotte.tak.display.events.SelectStackEvent
-import org.marmotte.tak.display.parts.AvailableMoves
 import org.marmotte.tak.display.parts.BoardBackGround
 import org.marmotte.tak.display.parts.BoardMessage
 import org.marmotte.tak.display.parts.PieceDisplay
@@ -36,7 +35,6 @@ class TakBoardPanel(
         isOpaque = true
         background = Color.black
         add(BoardBackGround(uiState.board::size))
-        add(AvailableMoves(uiState)) // black
         add(BoardMessage(1, 10, true) { "${uiState.board.activePlayer.toPlayerName()} to play" })
         add(pieceDisplay)
         minimumSize = Dimension(MIN_SCALE * (uiState.board.size + 2), MIN_SCALE * (uiState.board.size + 2))
@@ -85,9 +83,17 @@ class TakBoardPanel(
                                         boardController.onPrepareMove(preparedMove)
                                     } else if (e.button == MouseEvent.BUTTON1) { // left-click: select the distribution
                                         val dist = pos.distTo(preparedMove.pos, preparedMove.dir) // dist from stack to click
-                                        val distribThere = preparedMove.distrib.getOrNull(dist-1)
+                                        val distribThere = preparedMove.distrib.getOrNull(dist - 1)
                                         if (dist <= 0) {
-                                            println("Failed distrib change (clicked in the wrong dir)") // TODO maybe change the dir and restart a distrib? or cancel?
+                                            println("Failed distrib change (clicked in the wrong dir)")
+                                            val newDirMove = StackMove(
+                                                uiState.board.activePlayer,
+                                                selected,
+                                                selected.tower.pos,
+                                                dir,
+                                                listOf(selected.size)
+                                            )
+                                            boardController.onPrepareMove(newDirMove)
                                         } else if (distribThere == null) {
                                             println("Failed distrib change (no distrib where clicked)")
                                         } else if (distribThere <= 1) {
@@ -95,10 +101,10 @@ class TakBoardPanel(
                                         } else {
                                             val newDistrib = preparedMove.distrib.toMutableList()
                                             newDistrib[dist - 1]--
-                                            if(newDistrib.size <= dist) {
+                                            if (newDistrib.size <= dist) {
                                                 newDistrib.add(1)
                                             } else {
-                                                newDistrib[dist] ++
+                                                newDistrib[dist]++
                                             }
                                             boardController.onPrepareMove(preparedMove.copy(distrib = newDistrib))
                                         }
