@@ -15,19 +15,19 @@ data class StackMove(val player: Boolean, private val stack: Stack, val pos: Pos
         var height = -1
         val fallenTiles: Map<Pos, List<Piece>> = distrib.mapIndexed { steps, nbTiles -> // move step by step
             val newPos = pos.move(dir, steps + 1)
-            newPos to (0 until nbTiles).map { // position each tile in that step
+            newPos to (0 until nbTiles).flatMap { // position each tile in that step
                 height++
                 val piece = stack[height]
                 val tower = board.towerAt(newPos) ?: return MoveOutcome.illegal(board, this, "Falling outside the board")
-                when (tower.topPiece) { // check receiver must be able to accept the piece
-                    null -> piece
+                when (val topPiece = tower.topPiece) { // check receiver must be able to accept the piece
+                    null -> listOf(piece)
                     is CapStone -> return MoveOutcome.illegal(board, this, "Pieces falling onto a CapStone at $newPos")
                     is ReserveTile -> throw UnsupportedOperationException("There should never be a ReserveTile in a Stack")
-                    is Road ->  piece
+                    is Road ->  listOf(piece)
                     is Wall -> {
                         if (piece.piece == CAPSTONE) { // crushing the wall
                             crushedWall = newPos to tower.pieces.size - 1
-                            piece
+                            listOf(Road(topPiece.player), piece) // crush the wall into a Road, then add the CapStone
                         } else {
                             return MoveOutcome.illegal(board, this, "Pieces falling onto a Wall at $newPos")
                         }
