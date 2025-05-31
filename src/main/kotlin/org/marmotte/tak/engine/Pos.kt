@@ -9,6 +9,7 @@ data class Pos(
     val file: Int,
     val row: Int
 ) {
+    constructor(file: Char, row: Int): this(file.lowercaseChar() - 'A', row)
     fun fileLetter(): Char = 'A' + file
     fun move(dir: Dir, nb: Int = 1): Pos {
         return when (dir) {

@@ -4,10 +4,17 @@ import org.marmotte.tak.engine.PieceType.CAPSTONE
 
 interface Move {
     fun applyTo(board: Board): MoveOutcome
-
+    fun <I, O> accept(visitor: MoveVisitor<I, O>, input: I): O
 }
 
-data class StackMove(val player: Boolean, private val stack: Stack, val pos: Pos, val dir: Dir, val distrib: List<Int>) : Move {
+interface MoveVisitor<I, O> {
+    fun visit(move: StackMove, input: I): O
+    fun visit(move: PlaceReserveWall, input: I): O
+    fun visit(move: PlaceReserveRoad, input: I): O
+    fun visit(move: PlaceCapStone, input: I): O
+}
+
+data class StackMove(val player: Boolean, val stack: Stack, val pos: Pos, val dir: Dir, val distrib: List<Int>) : Move {
 
     override fun applyTo(board: Board): MoveOutcome {
         var crushedWall: Pair<Pos, Int>? = null
@@ -23,7 +30,7 @@ data class StackMove(val player: Boolean, private val stack: Stack, val pos: Pos
                     null -> listOf(piece)
                     is CapStone -> return MoveOutcome.illegal(board, this, "Pieces falling onto a CapStone at $newPos")
                     is ReserveTile -> throw UnsupportedOperationException("There should never be a ReserveTile in a Stack")
-                    is Road ->  listOf(piece)
+                    is Road -> listOf(piece)
                     is Wall -> {
                         if (piece.piece == CAPSTONE) { // crushing the wall
                             crushedWall = newPos to tower.pieces.size - 1
@@ -49,6 +56,10 @@ data class StackMove(val player: Boolean, private val stack: Stack, val pos: Pos
         )
         return MoveOutcome(board, this, newBoard)
     }
+
+    override fun <I, O> accept(visitor: MoveVisitor<I, O>, input: I): O {
+        return visitor.visit(this, input)
+    }
 }
 
 data class PlaceReserveWall(val player: Boolean, val pos: Pos) : Move {
@@ -62,6 +73,10 @@ data class PlaceReserveWall(val player: Boolean, val pos: Pos) : Move {
             consumedTile = true
         )
         return MoveOutcome(board, this, newBoard)
+    }
+
+    override fun <I, O> accept(visitor: MoveVisitor<I, O>, input: I): O {
+        return visitor.visit(this, input)
     }
 }
 
@@ -78,6 +93,10 @@ data class PlaceReserveRoad(val player: Boolean, val pos: Pos) : Move {
         )
         return MoveOutcome(board, this, newBoard)
     }
+
+    override fun <I, O> accept(visitor: MoveVisitor<I, O>, input: I): O {
+        return visitor.visit(this, input)
+    }
 }
 
 data class PlaceCapStone(val player: Boolean, val capStone: CapStone, val pos: Pos) : Move {
@@ -91,5 +110,9 @@ data class PlaceCapStone(val player: Boolean, val capStone: CapStone, val pos: P
             consumedCapStone = true
         )
         return MoveOutcome(board, this, newBoard)
+    }
+
+    override fun <I, O> accept(visitor: MoveVisitor<I, O>, input: I): O {
+        return visitor.visit(this, input)
     }
 }
