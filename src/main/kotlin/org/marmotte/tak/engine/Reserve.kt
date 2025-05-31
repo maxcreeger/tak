@@ -12,6 +12,8 @@ class Reserve private constructor(val tiles: List<ReserveTile>, val capstones: L
         }
     }
 
+    fun isExhausted() = tiles.isEmpty() && capstones.isEmpty()
+
     fun pickTile(): Pair<Reserve, ReserveTile>? {
         val tile: ReserveTile = tiles.firstOrNull() ?: return null
         return Reserve(tiles.minus(tile), capstones, player) to tile

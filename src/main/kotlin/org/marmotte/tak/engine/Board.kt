@@ -23,20 +23,13 @@ class Board private constructor(
                 8 -> 40 to 2
                 else -> throw UnsupportedOperationException()
             }
-            val emptyTowers =
-                List(size) { file ->
-                    List(size) { row ->
-                        Tower(Pos(file, row))
-                    }
+            val emptyTowers = List(size) { file ->
+                List(size) { row ->
+                    Tower(Pos(file, row))
                 }
+            }
             return Board(
-                size,
-                true,
-                emptyTowers,
-                nbStones,
-                nbStones,
-                nbCapstones,
-                nbCapstones
+                size, true, emptyTowers, nbStones, nbStones, nbCapstones, nbCapstones
             )
         }
     }
@@ -85,7 +78,66 @@ class Board private constructor(
         )
     }
 
-    val status: GameStatus = GameStatus.ACTIVE // TODO
+    fun Pos.neighbours(player: Boolean): List<Pos> {
+        return listOf(
+            Pair(0, 1),
+            Pair(1, 0),
+            Pair(-1, 0),
+            Pair(0, -1)
+        )
+            .mapNotNull { (dRow, dFile) ->
+                towerAt(Pos(file + dFile, row + dRow))
+            }
+            .filter { it.topPiece?.player == player } // must be owned by the requested player
+            .filter { it.topPiece?.piece != PieceType.WALL } // Capstones & Roads count
+            .map { it.pos }
+    }
+
+    fun checkConnectivity(player: Boolean, source: List<Pos>, target: List<Pos>): Boolean {
+        val open = source.toMutableSet()
+        val closed = mutableSetOf<Pos>()
+        while (open.isNotEmpty()) {
+            val candidate = open.first().also { open.remove(it) }
+            if (target.contains(candidate)) return true
+            closed.add(candidate)
+            val neighbours = candidate.neighbours(player)
+            open.addAll(neighbours.minus(closed))
+        }
+        return false
+    }
+
+    val status: GameStatus by lazy {
+        // Detect a path
+        for (player in listOf(!activePlayer, activePlayer)) {
+            // If a player makes a single move that creates a road for both players, then the player who made the move wins. So we start checking if the previous player won
+            val firstRow = board[0].filter { it.topPiece?.player == player }.map { it.pos }
+            val lastRow = board[board.size - 1].filter { it.topPiece?.player == player }.map { it.pos }
+            if (checkConnectivity(player, firstRow, lastRow)) {
+                return@lazy if (player) GameStatus.WHITE_WIN else GameStatus.BLACK_WIN
+            }
+            val firstCol = board.map { it[0] }.filter { it.topPiece?.player == player }.map { it.pos }
+            val lastCol = board.map { it[it.size - 1] }.filter { it.topPiece?.player == player }.map { it.pos }
+            if (checkConnectivity(player, firstCol, lastCol)) {
+                return@lazy if (player) GameStatus.WHITE_WIN else GameStatus.BLACK_WIN
+            }
+        }
+
+        // detect board is filled or Reserve is exhausted
+        if (towers.all { it.pieces.isNotEmpty() } ||whiteReserve.isExhausted() ||blackReserve.isExhausted()) {
+            // Count flat stones
+            val flats = towers.mapNotNull { it.topPiece }.filterIsInstance<Road>() // Only visible Roads count
+            val whiteFlats = flats.count { it.player }
+            val blackFlats = flats.count { !it.player }
+            return@lazy if (whiteFlats > blackFlats) {
+                GameStatus.WHITE_WIN
+            } else if (whiteFlats < blackFlats) {
+                GameStatus.BLACK_WIN
+            } else {
+                GameStatus.DRAW
+            }
+        }
+        GameStatus.ACTIVE
+    }
 
     fun randomize() {
         for (row in board) {
@@ -111,7 +163,11 @@ class Board private constructor(
     }
 
     fun execute(move: Move): MoveOutcome {
-        return move.applyTo(this)
+        if(status.isActive()) {
+            return move.applyTo(this)
+        } else {
+            return MoveOutcome.illegal(this, move, "Game has ended with: $status")
+        }
     }
 
     fun resign(): Move {

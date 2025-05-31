@@ -4,10 +4,7 @@ import org.marmotte.tak.controller.BoardController
 import org.marmotte.tak.controller.GameMenu
 import org.marmotte.tak.display.RemainingPiecesPanel
 import org.marmotte.tak.display.TakBoardPanel
-import javax.swing.Box
-import javax.swing.BoxLayout
-import javax.swing.JFrame
-import javax.swing.JPanel
+import javax.swing.*
 
 
 class Display {
@@ -68,6 +65,25 @@ class Display {
     init { // Give control over UI ====================================
         remainingPiecesPanelWhite.addBoardController(broker)
         remainingPiecesPanelBlack.addBoardController(broker)
+        uiState.addIllegalMoveListener {
+            JOptionPane.showMessageDialog(
+                frame,
+                it.message,
+                "Illegal Move",
+                JOptionPane.NO_OPTION,
+            )
+        }
+        uiState.addMoveListener {
+            if(!it.new.status.isActive()) {
+                JOptionPane.showMessageDialog(
+                    frame,
+                    "${it.new.status} !",
+                    "Game Over",
+                    JOptionPane.NO_OPTION,
+                )
+
+            }
+        }
 
         // Show
         frame.defaultCloseOperation = JFrame.EXIT_ON_CLOSE

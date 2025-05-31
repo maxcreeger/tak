@@ -1,5 +1,8 @@
 package org.marmotte.tak.engine
 
+import org.marmotte.tak.engine.GameStatus.*
+
+
 /**
  * State of the Game
  *

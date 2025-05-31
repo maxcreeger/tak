@@ -34,7 +34,7 @@ class TakBoardPanel(
     init {
         isOpaque = true
         background = Color.black
-        add(BoardBackGround(uiState.board::size))
+        add(BoardBackGround {  uiState.board.size })
         add(BoardMessage(1, 10, true) { "${uiState.board.activePlayer.toPlayerName()} to play" })
         add(pieceDisplay)
         minimumSize = Dimension(MIN_SCALE * (uiState.board.size + 2), MIN_SCALE * (uiState.board.size + 2))
@@ -159,7 +159,7 @@ class TakBoardPanel(
     }
 
     private fun scale(): Int = min(
-        size.height / (uiState.board.size + 2),
+        size.height / (uiState.board.size + 4),
         size.width / (uiState.board.size + 2)
     ).coerceIn(MIN_SCALE, MAX_SCALE)
 
