@@ -2,38 +2,42 @@ package org.marmotte.tak.engine
 
 import kotlin.random.Random
 
-class Board private constructor(
+class Board(
     val size: Int,
     val activePlayer: Boolean = true,
-    /** File then row **/
+    /** Row then File **/
     val board: List<List<Tower>>,
     nbReserveTilesWhite: Int,
     nbReserveTilesBlack: Int,
     nbReserveCapStonesWhite: Int,
     nbReserveCapStonesBlack: Int,
+    /** The move counter denotes which move is currently due to be played. This is never a 0, the move due to be played at the beginning of the game is move 1. For the purposes of notation and score keeping, a full “move” is counted as a turn taken by each player, as in chess. For example, after each player has made their initial move, the move counter would then be incremented to 2, to show that the game is headed into the second move for each player. **/
+    val moveNumber: Int,
 ) {
 
     companion object {
+        fun reserveForGameSize(size: Int): Pair<Int, Int> = when (size) {
+            4 -> 15 to 0
+            5 -> 21 to 1
+            6 -> 30 to 1
+            7 -> 40 to 2
+            8 -> 40 to 2
+            else -> throw UnsupportedOperationException()
+        }
+
         fun newGame(size: Int): Board {
-            val (nbStones, nbCapstones) = when (size) {
-                4 -> 15 to 0
-                5 -> 21 to 1
-                6 -> 30 to 1
-                7 -> 40 to 2
-                8 -> 40 to 2
-                else -> throw UnsupportedOperationException()
-            }
-            val emptyTowers = List(size) { file ->
-                List(size) { row ->
-                    Tower(Pos(file, row))
+            val (nbStones, nbCapstones) = reserveForGameSize(size)
+            val emptyTowers = List(size) { row ->
+                List(size) { file ->
+                    val fileLetter = Pos.file(file)
+                    Tower(Pos(fileLetter, row))
                 }
             }
             return Board(
-                size, true, emptyTowers, nbStones, nbStones, nbCapstones, nbCapstones
+                size, true, emptyTowers, nbStones, nbStones, nbCapstones, nbCapstones, 1
             )
         }
     }
-
 
     val whiteReserve: Reserve = Reserve(true, nbReserveTilesWhite, nbReserveCapStonesWhite)
     val blackReserve: Reserve = Reserve(false, nbReserveTilesBlack, nbReserveCapStonesBlack)
@@ -50,9 +54,10 @@ class Board private constructor(
         consumedTile: Boolean = false,
         consumedCapStone: Boolean = false,
     ): Board {
-        val new = List(size) { file ->
-            List(size) { row ->
-                val pos = Pos(file, row)
+        val new = List(size) { row ->
+            List(size) { file ->
+                val fileLetter = Pos.file(file)
+                val pos = Pos(fileLetter, row)
                 var tower = towerAt(pos)!!
                 // Trimming the top off first
                 val cut = towerCut[pos]
@@ -75,6 +80,7 @@ class Board private constructor(
             blackReserve.tiles.size - if (consumedTile && !activePlayer) 1 else 0,
             whiteReserve.capstones.size - if (consumedCapStone && activePlayer) 1 else 0,
             blackReserve.capstones.size - if (consumedCapStone && !activePlayer) 1 else 0,
+            moveNumber + if (!activePlayer) 1 else 0
         )
     }
 
@@ -110,20 +116,20 @@ class Board private constructor(
         // Detect a path
         for (player in listOf(!activePlayer, activePlayer)) {
             // If a player makes a single move that creates a road for both players, then the player who made the move wins. So we start checking if the previous player won
-            val firstRow = board[0].filter { it.topPiece?.player == player }.map { it.pos }
-            val lastRow = board[board.size - 1].filter { it.topPiece?.player == player }.map { it.pos }
+            val firstRow = board.map { it[0] }.filter { it.topPiece?.player == player }.map { it.pos }
+            val lastRow = board.map { it[it.size - 1] }.filter { it.topPiece?.player == player }.map { it.pos }
             if (checkConnectivity(player, firstRow, lastRow)) {
                 return@lazy if (player) GameStatus.WHITE_WIN else GameStatus.BLACK_WIN
             }
-            val firstCol = board.map { it[0] }.filter { it.topPiece?.player == player }.map { it.pos }
-            val lastCol = board.map { it[it.size - 1] }.filter { it.topPiece?.player == player }.map { it.pos }
-            if (checkConnectivity(player, firstCol, lastCol)) {
+            val firstFile = board[0].filter { it.topPiece?.player == player }.map { it.pos }
+            val lastFile = board[board.size - 1].filter { it.topPiece?.player == player }.map { it.pos }
+            if (checkConnectivity(player, firstFile, lastFile)) {
                 return@lazy if (player) GameStatus.WHITE_WIN else GameStatus.BLACK_WIN
             }
         }
 
         // detect board is filled or Reserve is exhausted
-        if (towers.all { it.pieces.isNotEmpty() } ||whiteReserve.isExhausted() ||blackReserve.isExhausted()) {
+        if (towers.all { it.pieces.isNotEmpty() } || whiteReserve.isExhausted() || blackReserve.isExhausted()) {
             // Count flat stones
             val flats = towers.mapNotNull { it.topPiece }.filterIsInstance<Road>() // Only visible Roads count
             val whiteFlats = flats.count { it.player }
@@ -140,8 +146,8 @@ class Board private constructor(
     }
 
     fun randomize() {
-        for (row in board) {
-            for (tower in row) {
+        for (file in board) {
+            for (tower in file) {
                 val nbTiles = Random.nextInt(4) - 1
                 when {
                     nbTiles < 0 -> tower.add(listOf(Wall(Random.nextBoolean())))
@@ -159,14 +165,14 @@ class Board private constructor(
 
     /** Returns the Tower at that [Pos] or null if pos is outside the board) */
     fun towerAt(pos: Pos): Tower? {
-        return board.getOrNull(pos.file)?.getOrNull(pos.row)
+        return board.getOrNull(pos.row)?.getOrNull(pos.fileIndex())
     }
 
     fun execute(move: Move): MoveOutcome {
-        if(status.isActive()) {
-            return move.applyTo(this)
+        return if (status.isActive()) {
+            move.applyTo(this)
         } else {
-            return MoveOutcome.illegal(this, move, "Game has ended with: $status")
+            MoveOutcome.illegal(this, move, "Game has ended with: $status")
         }
     }
 

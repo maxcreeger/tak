@@ -36,8 +36,8 @@ class UIState {
         moveListeners.forEach { it(outcome) }
     }
 
-    fun newGame() {
-        board = Board.newGame(5)
+    fun newGame(newBoard: Board = Board.newGame(5)) {
+        board = newBoard
     }
 
     fun setHover(stack: Stack?) {

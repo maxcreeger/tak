@@ -1,6 +1,5 @@
 package org.marmotte.tak.display.parts
 
-import org.marmotte.tak.display.drawOval
 import org.marmotte.tak.display.drawables.Drawable
 import org.marmotte.tak.display.drawables.UpdateContext
 import org.marmotte.tak.engine.Pos
@@ -41,7 +40,7 @@ class BoardBackGround(private val sizeGetter: () -> Int) : Drawable {
         // Draw file letters and rank numbers
         g.color = ColorScheme.text
         for (i in 0 until size) {
-            val letter = Pos(i, 0).fileLetter().toString()
+            val letter = Pos.file(i).toString()
             val letterRect: Rectangle2D = g.fontMetrics.getStringBounds(letter, g)
             g.drawString(
                 letter,

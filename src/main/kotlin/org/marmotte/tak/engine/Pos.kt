@@ -6,11 +6,14 @@ import kotlin.math.max
 
 /** Position on the Board. Coordinates from `0..n` **/
 data class Pos(
-    val file: Int,
+    val file: Char,
     val row: Int
 ) {
-    constructor(file: Char, row: Int): this(file.lowercaseChar() - 'A', row)
-    fun fileLetter(): Char = 'A' + file
+
+    companion object{
+        fun file(index: Int): Char = 'A' + index
+    }
+    fun fileIndex() = file.uppercaseChar() - 'A'
     fun move(dir: Dir, nb: Int = 1): Pos {
         return when (dir) {
             NORTH -> Pos(file, row - nb)

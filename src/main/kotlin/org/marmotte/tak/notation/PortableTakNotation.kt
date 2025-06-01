@@ -9,10 +9,10 @@ import org.marmotte.tak.notation.PTNPosStyle.LOWERCASE
 import org.marmotte.tak.notation.PTNPosStyle.UPPERCASE
 
 /** Portable Tak Notation, see https://ustak.org/portable-tak-notation/ **/
-class PortableTakNotation(val styles: List<PTNStyle>) : TakMoveNotation {
+class PortableTakNotation(val styles: List<PTNStyle> = emptyList()) : TakMoveNotation {
 
     companion object {
-        val NOTATION_PARSER = Regex("""([CBS\d]?)([a-h])([1-8])([<>+\-)])(\d+)""")
+        val NOTATION_PARSER = Regex("""([CBS\d]?)([a-h])([1-8])([<>+\-)])(\d+)(['*!?]*)""")
     }
 
     inner class NotationVisitor : MoveVisitor<Unit, String> {
@@ -23,9 +23,9 @@ class PortableTakNotation(val styles: List<PTNStyle>) : TakMoveNotation {
 
         fun Pos.ptn(): String {
             return if (posStyle == UPPERCASE) {
-                fileLetter().uppercaseChar() + row.toString()
+                file.uppercaseChar() + row.toString()
             } else {
-                fileLetter().lowercaseChar() + row.toString()
+                file.lowercaseChar() + row.toString()
             }
         }
 

@@ -18,7 +18,7 @@ class PieceDisplay(private val uiState: UIState) : Drawable {
         // Draw regular tiles
         for (x in 0 until size) {
             for (y in 0 until size) {
-                val tilePos = Pos(x, y)
+                val tilePos = Pos(Pos.file(x), y)
                 uiState.board.towerAt(tilePos)?.draw(g, updateContext)
             }
         }
@@ -30,7 +30,7 @@ class PieceDisplay(private val uiState: UIState) : Drawable {
         preparedMove.distrib.forEachIndexed { moves, nbTiles ->
             val tilePos = preparedMove.pos.move(preparedMove.dir, 1 + moves)
             val tower = uiState.board.towerAt(tilePos) ?: return // illegal access
-            for(height in tower.pieces.size until (tower.pieces.size + nbTiles)) {
+            for (height in tower.pieces.size until (tower.pieces.size + nbTiles)) {
                 val point = getPieceCenter(tower, height)
                 val piece = selected[total++]
                 piece.drawAt(point.x, point.y, g, updateContext, phantom = true)
@@ -47,10 +47,12 @@ class PieceDisplay(private val uiState: UIState) : Drawable {
     }
 
     fun getPieceCenter(tower: Tower, height: Int): Point2D.Double {
-        return Point2D.Double(tower.pos.file + 1.0 + height / 15.0, tower.pos.row + 1.0 - height / 8.0)
+        return Point2D.Double(tower.pos.fileIndex() + 1.0 + height / 15.0, tower.pos.row + 1.0 - height / 8.0)
     }
 
     fun getPos(e: MouseEvent, scale: Int): Pos {
-        return Pos((e.x.toDouble()/ scale - 0.5).toInt(), (e.y.toDouble() / scale - 0.5).toInt())
+        val row = (e.y.toDouble() / scale - 0.5).toInt()
+        val file = (e.x.toDouble() / scale - 0.5).toInt()
+        return Pos(Pos.file(file), row)
     }
 }

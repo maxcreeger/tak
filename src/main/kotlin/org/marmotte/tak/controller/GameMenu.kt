@@ -1,9 +1,8 @@
 package org.marmotte.tak.controller
 
-import org.marmotte.tak.engine.Board
 import org.marmotte.tak.gameplay.UIState
+import org.marmotte.tak.notation.TakPositionalSystem
 import java.awt.Color
-import java.awt.Dimension
 import java.awt.event.ActionEvent
 import javax.swing.*
 import javax.swing.text.AttributeSet
@@ -43,6 +42,26 @@ class GameMenu(val uiState: UIState, frame: JFrame) : JMenuBar() {
                     }
                 )
             )
+            menu.add(
+                JMenuItem(
+                    object : AbstractAction("New Game from TPS...", UIManager.getIcon("FileChooser.newFolderIcon")) {
+                        override fun actionPerformed(e: ActionEvent?) {
+                            val tps = JOptionPane.showInputDialog(
+                                frame,
+                                "Enter a valid TPS (Tak Positional System) string",
+                                "New Game from TPS",
+                                JOptionPane.QUESTION_MESSAGE,
+                            )
+                            val newBoard = TakPositionalSystem().build(tps)
+                            if(newBoard == null) {
+                                println("Could not parse TPS string: $tps")
+                            } else {
+                                uiState.newGame(newBoard)
+                            }
+                        }
+                    }
+                )
+            )
         }.also { add(it) }
         JMenu("Move").also { menu ->
             menu.add(
@@ -60,6 +79,23 @@ class GameMenu(val uiState: UIState, frame: JFrame) : JMenuBar() {
                                 )
                             }
                             frame.repaint()
+                        }
+                    }
+                )
+            )
+        }.also { add(it) }
+        JMenu("Position").also { menu ->
+            menu.add(
+                JMenuItem(
+                    object : AbstractAction("Display TPS") {
+                        override fun actionPerformed(e: ActionEvent?) {
+                            val tps = TakPositionalSystem().note(uiState.board)
+                            JOptionPane.showMessageDialog(
+                                frame,
+                                tps,
+                                "Tak Positional System",
+                                JOptionPane.NO_OPTION,
+                            )
                         }
                     }
                 )
