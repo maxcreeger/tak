@@ -12,7 +12,7 @@ class BoardBackGround(private val sizeGetter: () -> Int) : Drawable {
 
     companion object {
         private val lineStroke = BasicStroke(3.0f)
-        private val RADIUS = 0.15
+        private const val RADIUS = 0.15
     }
 
     override fun draw(g: Graphics2D, updateContext: UpdateContext) {

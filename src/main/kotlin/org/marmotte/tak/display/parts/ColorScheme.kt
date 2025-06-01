@@ -3,7 +3,7 @@ package org.marmotte.tak.display.parts
 import java.awt.Color
 
 object ColorScheme {
-    var text = Color.WHITE
+    var text: Color = Color.WHITE
     var whitePlayer = Color(238, 238, 210)
     var blackPlayer = Color(42, 42, 42)
     var background = Color(118, 150, 86)

@@ -11,9 +11,9 @@ sealed interface Piece {
 
     companion object{
         fun Rectangle.toPolygon(): Polygon {
-            val xpoints = intArrayOf(x, x + width, x + width, x)
-            val ypoints = intArrayOf(y, y, y + height, y + height)
-            return Polygon(xpoints, ypoints, 4)
+            val xCoords = intArrayOf(x, x + width, x + width, x)
+            val yCoords = intArrayOf(y, y, y + height, y + height)
+            return Polygon(xCoords, yCoords, 4)
         }
     }
 

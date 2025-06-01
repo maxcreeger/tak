@@ -161,7 +161,7 @@ class Board(
 
     fun reserveOf(player: Boolean): Reserve = if (player) whiteReserve else blackReserve
 
-    /** Returns the Tower at that [Pos] or null if pos is outside the board) */
+    /** Returns the Tower at that [Pos] (or null if pos is outside the board) */
     fun towerAt(pos: Pos): Tower? {
         return board.getOrNull(pos.row)?.getOrNull(pos.fileIndex())
     }

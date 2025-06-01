@@ -17,7 +17,7 @@ class TakPositionalSystem : TakPositionNotation {
 
     fun Board.tps(): String {
         val rows = (0 until size).map { row ->
-            var rowDesc = mutableListOf<String>()
+            val rowDesc = mutableListOf<String>()
             var emptyTowers = 0
             for (fileNum in 0 until size) {
                 val file = Pos.file(fileNum)

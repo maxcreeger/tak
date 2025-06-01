@@ -115,7 +115,7 @@ class TakBoardPanel(
                             }
 
                             is StackOfReserveCapStone -> {
-                                boardController.onMove(generatePlaceCapStoneMove(selected.capStone, pos))
+                                boardController.onMove(PlaceCapStone(uiState.board.activePlayer, selected.capStone, pos))
                             }
 
                             is StackOfReserveTile -> {
@@ -175,19 +175,6 @@ class TakBoardPanel(
                 ?.let { StackOfPartialTower(tower, it) }
         }
         return hoveredStack
-    }
-
-    private fun generateStackMove(
-        stack: StackOfPartialTower,
-        pos: Pos,
-    ): StackMove {
-        val tower = stack.tower
-        val dir = tower.pos.dirTo(pos)
-        return StackMove(uiState.board.activePlayer, stack, tower.pos, dir, listOf(stack.size))
-    }
-
-    private fun generatePlaceCapStoneMove(capStone: CapStone, pos: Pos): PlaceCapStone {
-        return PlaceCapStone(uiState.board.activePlayer, capStone, pos)
     }
 }
 
