@@ -13,10 +13,9 @@ import org.marmotte.tak.engine.GameStatus.*
  * * [BLACK_WIN]: Game is won by BLACK
  * * [WHITE_WIN]: Game is won by WHITE
  * * [FORFEIT]: Game has been lost by forfeit (illegal move played, time allocation exceeded)
- * * [RESIGNATION]: TBD
  */
 enum class GameStatus {
-    ACTIVE, ACTIVE_DRAW_REQUESTED, DRAW, BLACK_WIN, WHITE_WIN, FORFEIT, STALEMATE, RESIGNATION;
+    ACTIVE, ACTIVE_DRAW_REQUESTED, DRAW, BLACK_WIN, WHITE_WIN, FORFEIT;
 
     fun isActive(): Boolean = this == ACTIVE || this == ACTIVE_DRAW_REQUESTED
 

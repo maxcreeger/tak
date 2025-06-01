@@ -93,8 +93,13 @@ class PortableTakNotation(val styles: List<PTNStyle> = emptyList()) : TakMoveNot
             return "C${move.pos.ptn()}"
         }
 
+        override fun visit(move: Resign, input: Unit): String {
+            return if(move.player) "0-1" else "1-0"
+        }
 
         fun build(board: Board, notation: String): Move? {
+            if(notation == "1-0") return Resign(false)
+            if(notation == "0-1") return Resign(true)
             val player = board.activePlayer
             val match = NOTATION_PARSER.matchEntire(notation) ?: return null
             val file = match.groups[2]?.value?.first() ?: return null

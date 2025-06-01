@@ -13,6 +13,7 @@ class Board(
     nbReserveCapStonesBlack: Int,
     /** The move counter denotes which move is currently due to be played. This is never a 0, the move due to be played at the beginning of the game is move 1. For the purposes of notation and score keeping, a full “move” is counted as a turn taken by each player, as in chess. For example, after each player has made their initial move, the move counter would then be incremented to 2, to show that the game is headed into the second move for each player. **/
     val moveNumber: Int,
+    status: GameStatus? = null,
 ) {
 
     companion object {
@@ -113,6 +114,7 @@ class Board(
     }
 
     val status: GameStatus by lazy {
+        if (status != null) return@lazy status
         // Detect a path
         for (player in listOf(!activePlayer, activePlayer)) {
             // If a player makes a single move that creates a road for both players, then the player who made the move wins. So we start checking if the previous player won
@@ -159,10 +161,6 @@ class Board(
 
     fun reserveOf(player: Boolean): Reserve = if (player) whiteReserve else blackReserve
 
-    fun generateLegalMovesFrom(selected: Pos): List<Move> {
-        return emptyList() // TODO
-    }
-
     /** Returns the Tower at that [Pos] or null if pos is outside the board) */
     fun towerAt(pos: Pos): Tower? {
         return board.getOrNull(pos.row)?.getOrNull(pos.fileIndex())
@@ -176,8 +174,18 @@ class Board(
         }
     }
 
-    fun resign(): Move {
-        TODO()
+    fun resign(): Board {
+        return Board(
+            size,
+            activePlayer,
+            board,
+            whiteReserve.tiles.size,
+            blackReserve.tiles.size,
+            whiteReserve.capstones.size,
+            blackReserve.capstones.size,
+            moveNumber,
+            if (activePlayer) GameStatus.BLACK_WIN else GameStatus.WHITE_WIN
+        )
     }
 
     val towers: List<Tower> = board.flatMap { it }

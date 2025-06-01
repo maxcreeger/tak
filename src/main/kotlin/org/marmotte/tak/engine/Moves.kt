@@ -12,6 +12,7 @@ interface MoveVisitor<I, O> {
     fun visit(move: PlaceReserveWall, input: I): O
     fun visit(move: PlaceReserveRoad, input: I): O
     fun visit(move: PlaceCapStone, input: I): O
+    fun visit(move: Resign, input: I): O
 }
 
 data class StackMove(val player: Boolean, val stack: Stack, val pos: Pos, val dir: Dir, val distrib: List<Int>) : Move {
@@ -110,6 +111,16 @@ data class PlaceCapStone(val player: Boolean, val capStone: CapStone, val pos: P
             consumedCapStone = true
         )
         return MoveOutcome(board, this, newBoard)
+    }
+
+    override fun <I, O> accept(visitor: MoveVisitor<I, O>, input: I): O {
+        return visitor.visit(this, input)
+    }
+}
+
+data class Resign(val player: Boolean): Move {
+    override fun applyTo(board: Board): MoveOutcome {
+        return MoveOutcome(board, this, board.resign())
     }
 
     override fun <I, O> accept(visitor: MoveVisitor<I, O>, input: I): O {

@@ -1,5 +1,6 @@
 package org.marmotte.tak.controller
 
+import org.marmotte.tak.engine.Resign
 import org.marmotte.tak.gameplay.UIState
 import org.marmotte.tak.notation.TakPositionalSystem
 import java.awt.Color
@@ -53,7 +54,7 @@ class GameMenu(val uiState: UIState, frame: JFrame) : JMenuBar() {
                                 JOptionPane.QUESTION_MESSAGE,
                             )
                             val newBoard = TakPositionalSystem().build(tps)
-                            if(newBoard == null) {
+                            if (newBoard == null) {
                                 println("Could not parse TPS string: $tps")
                             } else {
                                 uiState.newGame(newBoard)
@@ -68,7 +69,7 @@ class GameMenu(val uiState: UIState, frame: JFrame) : JMenuBar() {
                 JMenuItem(
                     object : AbstractAction("Resign") {
                         override fun actionPerformed(e: ActionEvent?) {
-                            val resigned = uiState.board.execute(uiState.board.resign())
+                            val resigned = uiState.board.execute(Resign(uiState.board.activePlayer))
                             uiState.apply(resigned)
                             uiState.board.status.winner()?.let { winner ->
                                 JOptionPane.showMessageDialog(
