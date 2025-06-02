@@ -5,7 +5,7 @@ import org.marmotte.tak.engine.*
 class TakPositionalSystem : TakPositionNotation {
 
     companion object {
-        private val REGEX = Regex("""\[TPS "(\S+) \d+ \d+"]""")
+        private val REGEX = Regex("""\[TPS "(\S+) (\d+) (\d+)"]\s*""")
     }
 
     override fun note(board: Board): String {
@@ -70,10 +70,10 @@ class TakPositionalSystem : TakPositionNotation {
             .split("/")
             .mapIndexed { rowNum, rowStr ->
                 val row = mutableListOf<Tower>()
-                var fileNum = 0
                 rowStr
                     .split(",")
                     .forEach { towerStr ->
+                        val fileNum = row.size
                         if (towerStr.startsWith('x')) {
                             val nbEmpty = if (towerStr.length == 1) 1 else towerStr.substring(1).toInt()
                             repeat(nbEmpty) { i ->
@@ -81,7 +81,6 @@ class TakPositionalSystem : TakPositionNotation {
                                 val pos = Pos(file, rowNum)
                                 row.add(Tower(pos))
                             }
-                            fileNum += nbEmpty
                         } else {
                             val file = Pos.file(fileNum)
                             val pos = Pos(file, rowNum)
@@ -101,7 +100,7 @@ class TakPositionalSystem : TakPositionNotation {
                                         Road(playerNum)
                                     }
                                 }
-                            Tower(pos, stack)
+                            row.add(Tower(pos, stack))
                         }
                     }
                 row

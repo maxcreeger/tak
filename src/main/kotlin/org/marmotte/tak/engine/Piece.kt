@@ -91,6 +91,8 @@ class Wall(override val player: Boolean) : Piece {
         )
         return Polygon(xCoords, yCoords, 4)
     }
+
+    override fun toString(): String = "Wall($player)"
 }
 
 class CapStone(override val player: Boolean) : Piece {
@@ -122,4 +124,6 @@ class CapStone(override val player: Boolean) : Piece {
         )
         return Polygon(xCoords, yCoords, 6)
     }
+
+    override fun toString(): String = "CapStone($player)"
 }
