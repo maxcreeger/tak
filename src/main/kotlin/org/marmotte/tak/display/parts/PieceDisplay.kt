@@ -1,58 +1,106 @@
 package org.marmotte.tak.display.parts
 
-import org.marmotte.tak.display.drawables.Drawable
 import org.marmotte.tak.display.drawables.UpdateContext
-import org.marmotte.tak.engine.Pos
-import org.marmotte.tak.engine.Tower
-import org.marmotte.tak.gameplay.UIState
-import java.awt.BasicStroke
+import org.marmotte.tak.display.parts.PieceDisplay.toPolygon
+import org.marmotte.tak.engine.*
+import org.marmotte.tak.engine.CapStone.Companion.HEIGHT
+import org.marmotte.tak.engine.CapStone.Companion.THICKNESS
+import org.marmotte.tak.engine.Tile.Companion.WIDTH
 import java.awt.Graphics2D
-import java.awt.event.MouseEvent
+import java.awt.Polygon
+import java.awt.Rectangle
 import java.awt.geom.Point2D
 
-class PieceDisplay(private val uiState: UIState) : Drawable {
+object PieceDisplay {
 
-    override fun draw(g: Graphics2D, updateContext: UpdateContext) {
-        val size = uiState.board.size
-        g.stroke = BasicStroke(1f)
-        // Draw regular tiles
-        for (x in 0 until size) {
-            for (y in 0 until size) {
-                val tilePos = Pos(Pos.file(x), y)
-                uiState.board.towerAt(tilePos)?.draw(g, updateContext)
-            }
+    fun Rectangle.toPolygon(): Polygon {
+        val xCoords = intArrayOf(x, x + width, x + width, x)
+        val yCoords = intArrayOf(y, y, y + height, y + height)
+        return Polygon(xCoords, yCoords, 4)
+    }
+
+    fun drawAt(piece: Piece, x: Double, y: Double, g: Graphics2D, updateContext: UpdateContext, phantom: Boolean = false) {
+        val polygon = piece.accept(PieceOutline, PosAndScale(x, y, updateContext.scale))
+        val fillColor = when {
+            !phantom && updateContext.selectedStack?.contains(piece)?: false -> ColorScheme.selected
+            piece.player -> ColorScheme.whitePlayer
+            else -> ColorScheme.blackPlayer
         }
-        g.stroke = BasicStroke(3f)
-        // Draw 'phantom' tiles from the prepared Move
-        val selected = uiState.selectedStack ?: return // no stack selected
-        val preparedMove = uiState.preparedMove ?: return // no move prepared for that stack
-        var total = 0
-        preparedMove.distrib.forEachIndexed { moves, nbTiles ->
-            val tilePos = preparedMove.pos.move(preparedMove.dir, 1 + moves)
-            val tower = uiState.board.towerAt(tilePos) ?: return // illegal access
-            for (height in tower.pieces.size until (tower.pieces.size + nbTiles)) {
-                val point = getPieceCenter(tower, height)
-                val piece = selected[total++]
-                piece.drawAt(point.x, point.y, g, updateContext, phantom = true)
-            }
+        val drawColor = when {
+            phantom -> ColorScheme.phantom
+            updateContext.highlightedStack?.contains(piece) ?: false -> ColorScheme.highlight
+            piece.player -> ColorScheme.blackPlayer
+            else -> ColorScheme.whitePlayer
+        }
+        g.color = fillColor
+        g.fillPolygon(polygon)
+        g.color = drawColor
+        g.drawPolygon(polygon)
+    }
+}
+
+data class PosAndScale(val x: Double, val y: Double, val scale: Int){
+    constructor(pos: Point2D, scale: Int): this(pos.x, pos.y, scale)
+}
+
+object PieceOutline : PieceVisitor<PosAndScale, Polygon> {
+    fun tilePolygon(input: PosAndScale): Polygon {
+        with(input) {
+            return Rectangle(
+                (scale * (x - WIDTH / 2)).toInt(),
+                (scale * (y - WIDTH / 2)).toInt(),
+                (scale * (WIDTH)).toInt(),
+                (scale * (WIDTH)).toInt()
+            ).toPolygon()
         }
     }
 
+    override fun visit(road: Road, input: PosAndScale): Polygon {
+        return tilePolygon(input)
+    }
 
-    private fun Tower.draw(g: Graphics2D, updateContext: UpdateContext) {
-        pieces.forEachIndexed { height, piece ->
-            val point = getPieceCenter(this, height)
-            piece.drawAt(point.x, point.y, g, updateContext)
+    override fun visit(reserveTile: ReserveTile, input: PosAndScale): Polygon {
+        return tilePolygon(input)
+    }
+
+    override fun visit(wall: Wall, input: PosAndScale): Polygon {
+        with(input) {
+            val xCoords = intArrayOf(
+                (scale * (x + Wall.Companion.WIDTH / 2 - Wall.Companion.THICKNESS)).toInt(),
+                (scale * (x - Wall.Companion.WIDTH / 2)).toInt(),
+                (scale * (x - Wall.Companion.WIDTH / 2 + Wall.Companion.THICKNESS)).toInt(),
+                (scale * (x + Wall.Companion.WIDTH / 2)).toInt(),
+            )
+            val yCoords = intArrayOf(
+                (scale * (y + Wall.Companion.WIDTH / 2 + Wall.Companion.THICKNESS)).toInt(),
+                (scale * (y - Wall.Companion.WIDTH / 2 + Wall.Companion.THICKNESS)).toInt(),
+                (scale * (y - Wall.Companion.WIDTH / 2)).toInt(),
+                (scale * (y + Wall.Companion.WIDTH / 2)).toInt(),
+            )
+            return Polygon(xCoords, yCoords, 4)
         }
     }
 
-    fun getPieceCenter(tower: Tower, height: Int): Point2D.Double {
-        return Point2D.Double(tower.pos.fileIndex() + 1.0 + height / 15.0, tower.pos.row + 1.0 - height / 8.0)
+    override fun visit(capStone: CapStone, input: PosAndScale): Polygon {
+        with(input) {
+            val xCoords = intArrayOf(
+                (scale * (x - CapStone.Companion.WIDTH / 2)).toInt(),
+                (scale * (x - THICKNESS / 2)).toInt(),
+                (scale * (x - CapStone.Companion.WIDTH / 2)).toInt(),
+                (scale * (x + CapStone.Companion.WIDTH / 2)).toInt(),
+                (scale * (x + THICKNESS / 2)).toInt(),
+                (scale * (x + CapStone.Companion.WIDTH / 2)).toInt(),
+            )
+            val yCoords = intArrayOf(
+                (scale * (y + HEIGHT / 2)).toInt(),
+                (scale * y).toInt(),
+                (scale * (y - HEIGHT / 2)).toInt(),
+                (scale * (y - HEIGHT / 2)).toInt(),
+                (scale * y).toInt(),
+                (scale * (y + HEIGHT / 2)).toInt(),
+            )
+            return Polygon(xCoords, yCoords, 6)
+        }
     }
 
-    fun getPos(e: MouseEvent, scale: Int): Pos {
-        val row = (e.y.toDouble() / scale - 0.5).toInt()
-        val file = (e.x.toDouble() / scale - 0.5).toInt()
-        return Pos(Pos.file(file), row)
-    }
 }

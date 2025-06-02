@@ -1,10 +1,14 @@
 package org.marmotte.tak.engine
 
-sealed interface Stack : List<Piece>
+sealed interface Stack : List<Piece> {
+    fun owner(): Boolean
+}
 
 sealed class StackImpl(
     protected val pieces: List<Piece>
-) : Stack, List<Piece> by pieces
+) : Stack, List<Piece> by pieces {
+    override fun owner()= last().player
+}
 
 data class StackOfReserveTile(
     val reserveTile: ReserveTile
@@ -17,5 +21,9 @@ data class StackOfReserveCapStone(
 data class StackOfPartialTower(
     val tower: Tower,
     val fromPiece: Piece,
-) : StackImpl(tower.pieces.drop(tower.pieces.indexOf(fromPiece)))
+) : StackImpl(tower.drop(tower.indexOf(fromPiece))) {
+    fun move(dir: Dir, distrib: List<Int>): StackMove {
+        return StackMove(owner(), this, tower.pos, dir, distrib)
+    }
+}
 

@@ -23,7 +23,7 @@ class TakPositionalSystem : TakPositionNotation {
                 val file = Pos.file(fileNum)
                 val pos = Pos(file, row)
                 val tower = towerAt(pos) ?: throw UnsupportedOperationException()
-                if (tower.pieces.isEmpty()) {
+                if (tower.isEmpty()) {
                     emptyTowers++
                 } else {
                     // dump previous 'empties'
@@ -52,7 +52,7 @@ class TakPositionalSystem : TakPositionNotation {
     }
 
     fun Tower.tps(): String {
-        val tiles = pieces.joinToString("") { if (it.player) "1" else "2" }
+        val tiles = joinToString("") { if (it.player) "1" else "2" }
         val top = when (topPiece) {
             is Wall -> "S"
             is CapStone -> "C"
@@ -110,16 +110,16 @@ class TakPositionalSystem : TakPositionNotation {
         val stdReserve = Board.reserveForGameSize(size)
         val whiteTiles = towers
             .flatMap { it }
-            .sumOf { tower -> tower.pieces.count { it.player && it.piece != PieceType.CAPSTONE} }
+            .sumOf { tower -> tower.count { it.player && it !is CapStone} }
         val whiteCapStones = towers
             .flatMap { it }
-            .sumOf { tower -> tower.pieces.count { it.player && it.piece == PieceType.CAPSTONE} }
+            .sumOf { tower -> tower.count { it.player &&  it is CapStone} }
         val blackTiles = towers
             .flatMap { it }
-            .sumOf { tower -> tower.pieces.count { !it.player && it.piece != PieceType.CAPSTONE} }
+            .sumOf { tower -> tower.count { !it.player &&  it !is CapStone} }
         val blackCapStones = towers
             .flatMap { it }
-            .sumOf { tower -> tower.pieces.count { !it.player && it.piece == PieceType.CAPSTONE} }
+            .sumOf { tower -> tower.count { !it.player &&  it is CapStone} }
         return Board(
             towers.size,
             playerTurn == 1,

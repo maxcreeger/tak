@@ -1,7 +1,5 @@
 package org.marmotte.tak.engine
 
-import org.marmotte.tak.engine.PieceType.CAPSTONE
-
 interface Move {
     fun applyTo(board: Board): MoveOutcome
     fun <I, O> accept(visitor: MoveVisitor<I, O>, input: I): O
@@ -33,8 +31,8 @@ data class StackMove(val player: Boolean, val stack: Stack, val pos: Pos, val di
                     is ReserveTile -> throw UnsupportedOperationException("There should never be a ReserveTile in a Stack")
                     is Road -> listOf(piece)
                     is Wall -> {
-                        if (piece.piece == CAPSTONE) { // crushing the wall
-                            crushedWall = newPos to tower.pieces.size - 1
+                        if (piece is CapStone) { // crushing the wall
+                            crushedWall = newPos to tower.size - 1
                             listOf(Road(topPiece.player), piece) // crush the wall into a Road, then add the CapStone
                         } else {
                             return MoveOutcome.illegal(board, this, "Pieces falling onto a Wall at $newPos")
@@ -44,7 +42,7 @@ data class StackMove(val player: Boolean, val stack: Stack, val pos: Pos, val di
             }
         }.toMap()
         val originalTower = board.towerAt(pos)!!
-        val depletedStack = mapOf(pos to originalTower.pieces.indexOf(stack.first()))
+        val depletedStack = mapOf(pos to originalTower.indexOf(stack.first()))
         val removedTiles = if (crushedWall == null) {
             depletedStack
         } else {
@@ -67,7 +65,7 @@ data class PlaceReserveWall(val player: Boolean, val pos: Pos) : Move {
 
     override fun applyTo(board: Board): MoveOutcome {
         val tower = board.towerAt(pos) ?: return MoveOutcome.illegal(board, this, "Outside board range: $pos, board size is ${board.size}")
-        if (tower.pieces.isNotEmpty()) return MoveOutcome.illegal(board, this, "Board has a non-empty tower at $pos, cannot put a Wall there from the reserve")
+        if (tower.isNotEmpty()) return MoveOutcome.illegal(board, this, "Board has a non-empty tower at $pos, cannot put a Wall there from the reserve")
         val newBoard = board.change(
             emptyMap(),
             mapOf(pos to listOf(Wall(player))),
@@ -85,7 +83,7 @@ data class PlaceReserveRoad(val player: Boolean, val pos: Pos) : Move {
 
     override fun applyTo(board: Board): MoveOutcome {
         val tower = board.towerAt(pos) ?: return MoveOutcome.illegal(board, this, "Outside board range: $pos, board size is ${board.size}")
-        if (tower.pieces.isNotEmpty()) return MoveOutcome.illegal(board, this, "Board has a non-empty tower at $pos, cannot put a Tile there from the reserve")
+        if (tower.isNotEmpty()) return MoveOutcome.illegal(board, this, "Board has a non-empty tower at $pos, cannot put a Tile there from the reserve")
 
         val newBoard = board.change(
             emptyMap(),
@@ -104,7 +102,7 @@ data class PlaceCapStone(val player: Boolean, val capStone: CapStone, val pos: P
 
     override fun applyTo(board: Board): MoveOutcome {
         val tower = board.towerAt(pos) ?: return MoveOutcome.illegal(board, this, "Outside board range: $pos, board size is ${board.size}")
-        if (tower.pieces.isNotEmpty()) return MoveOutcome.illegal(board, this, "Board has a non-empty tower at $pos, cannot put a CapStone there from the reserve")
+        if (tower.isNotEmpty()) return MoveOutcome.illegal(board, this, "Board has a non-empty tower at $pos, cannot put a CapStone there from the reserve")
         val newBoard = board.change(
             emptyMap(),
             mapOf(pos to listOf(capStone)),

@@ -11,7 +11,6 @@ import java.awt.geom.Rectangle2D
 class BoardBackGround(private val sizeGetter: () -> Int) : Drawable {
 
     companion object {
-        private val lineStroke = BasicStroke(3.0f)
         private const val RADIUS = 0.15
     }
 
@@ -22,7 +21,7 @@ class BoardBackGround(private val sizeGetter: () -> Int) : Drawable {
         g.fillRect(0, 0, (size + 1) * updateContext.scale, (size + 1) * updateContext.scale)
         // Draw lines
         g.color = ColorScheme.lines
-        g.stroke = lineStroke
+        g.stroke = BasicStroke(updateContext.scale * 0.04f)
         for (i in 0..size) {
             g.drawLine(i * updateContext.scale, 0, i * updateContext.scale, updateContext.scale * (size + 1))
             g.drawLine(0, i * updateContext.scale, updateContext.scale * (size + 1), i * updateContext.scale)

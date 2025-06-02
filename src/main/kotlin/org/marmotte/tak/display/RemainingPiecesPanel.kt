@@ -10,6 +10,9 @@ import org.marmotte.tak.display.events.HoveredReserveEvent
 import org.marmotte.tak.display.events.SelectReserveCapStoneEvent
 import org.marmotte.tak.display.events.SelectReserveTileEvent
 import org.marmotte.tak.display.parts.ColorScheme
+import org.marmotte.tak.display.parts.PieceDisplay
+import org.marmotte.tak.display.parts.PieceOutline
+import org.marmotte.tak.display.parts.PosAndScale
 import org.marmotte.tak.engine.CapStone
 import org.marmotte.tak.engine.ReserveTile
 import org.marmotte.tak.engine.StackOfReserveCapStone
@@ -76,11 +79,11 @@ class RemainingPiecesPanel(
         val reserve = uiState.board.reserveOf(player)
         reserve.tiles.forEachIndexed { index, tile ->
             val pixelPos = getTilePixelPos(index)
-            tile.drawAt(pixelPos.x, pixelPos.y, g, updateContext)
+            PieceDisplay.drawAt(tile, pixelPos.x, pixelPos.y, g, updateContext)
         }
         reserve.capstones.forEachIndexed { index, capStone ->
             val pixelPos = getCapStonePixelPos(index)
-            capStone.drawAt(pixelPos.x, pixelPos.y, g, updateContext)
+            PieceDisplay.drawAt(capStone, pixelPos.x, pixelPos.y, g, updateContext)
         }
     }
 
@@ -133,8 +136,8 @@ class RemainingPiecesPanel(
             .reserveOf(player)
             .capstones
             .mapIndexedNotNull { index, capStone ->
-                val pos = getCapStonePixelPos(index)
-                val shape = capStone.getPolygon(pos.x, pos.y, scale)
+                val pixelPos = getCapStonePixelPos(index)
+                val shape = capStone.accept(PieceOutline, PosAndScale(pixelPos, scale))
                 if (shape.contains(e)) {
                     index to capStone
                 } else {
@@ -152,7 +155,7 @@ class RemainingPiecesPanel(
             .tiles
             .mapIndexedNotNull { index, tile ->
                 val pixelPos = getTilePixelPos(index)
-                val rect = tile.getPolygon(pixelPos.x, pixelPos.y, scale)
+                val rect = tile.accept(PieceOutline, PosAndScale(pixelPos, scale))
                 if (rect.contains(e)) {
                     index to tile
                 } else {

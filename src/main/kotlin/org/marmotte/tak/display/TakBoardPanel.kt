@@ -7,9 +7,7 @@ import org.marmotte.tak.display.drawables.UpdateContext
 import org.marmotte.tak.display.events.DeselectEvent
 import org.marmotte.tak.display.events.HoveredTowerEvent
 import org.marmotte.tak.display.events.SelectStackEvent
-import org.marmotte.tak.display.parts.BoardBackGround
-import org.marmotte.tak.display.parts.BoardMessage
-import org.marmotte.tak.display.parts.PieceDisplay
+import org.marmotte.tak.display.parts.*
 import org.marmotte.tak.engine.*
 import org.marmotte.tak.gameplay.Display.Companion.DEFAULT_SCALE
 import org.marmotte.tak.gameplay.Display.Companion.MAX_SCALE
@@ -29,14 +27,14 @@ class TakBoardPanel(
     private val boardController: BoardController,
 ) : JPanel(), GraphicalInterface by GraphicalInterfaceImpl() {
 
-    val pieceDisplay = PieceDisplay(uiState)
+    val boardDisplay = BoardDisplay(uiState)
 
     init {
         isOpaque = true
         background = Color.black
-        add(BoardBackGround {  uiState.board.size })
+        add(BoardBackGround { uiState.board.size })
         add(BoardMessage(1, 10, true) { "${uiState.board.activePlayer.toPlayerName()} to play" })
-        add(pieceDisplay)
+        add(boardDisplay)
         minimumSize = Dimension(MIN_SCALE * (uiState.board.size + 2), MIN_SCALE * (uiState.board.size + 2))
         preferredSize = Dimension(DEFAULT_SCALE * (uiState.board.size + 2), DEFAULT_SCALE * (uiState.board.size + 2))
         maximumSize = Dimension(MAX_SCALE * (uiState.board.size + 2), MAX_SCALE * (uiState.board.size + 2))
@@ -48,7 +46,7 @@ class TakBoardPanel(
                     val scale = scale()
                     if (e != null) {
                         val hoveredStack = findHoveredStack(scale, e)
-                        val pos = hoveredStack?.tower?.pos ?: pieceDisplay.getPos(e, scale)
+                        val pos = hoveredStack?.tower?.pos ?: boardDisplay.getPos(e, scale)
                         when (val selected = uiState.selectedStack) {
                             null -> // New selection...
                                 if (hoveredStack == null) { // new selection of empty square -> do nothing
@@ -82,7 +80,7 @@ class TakBoardPanel(
                                         )
                                         boardController.onPrepareMove(preparedMove)
                                     } else if (e.button == MouseEvent.BUTTON1) { // left-click: select the distribution
-                                        val dist = pos.distTo(preparedMove.pos, preparedMove.dir) // dist from stack to click
+                                        val dist = preparedMove.pos.distTo(pos, preparedMove.dir) // dist from stack to click
                                         val distribThere = preparedMove.distrib.getOrNull(dist - 1)
                                         if (dist <= 0) {
                                             println("Failed distrib change (clicked in the wrong dir)")
@@ -139,9 +137,9 @@ class TakBoardPanel(
                     if (hoveredStack != null) { // hovered a piece
                         boardController.onHover(HoveredTowerEvent(hoveredStack.tower.pos, hoveredStack))
                     } else {
-                        val pos = pieceDisplay.getPos(e, scale)
+                        val pos = boardDisplay.getPos(e, scale)
                         val tower = uiState.board.towerAt(pos) ?: return
-                        if (tower.pieces.isEmpty()) {
+                        if (tower.isEmpty()) {
                             // TODO show potential move if a stack is selected??
                             return
                         }
@@ -149,7 +147,6 @@ class TakBoardPanel(
                 }
             }
         )
-
     }
 
 
@@ -166,13 +163,12 @@ class TakBoardPanel(
     private fun findHoveredStack(scale: Int, e: MouseEvent): StackOfPartialTower? {
         val hoveredStack = uiState.board.towers.firstNotNullOfOrNull { tower ->
             tower
-                .pieces
                 .filterIndexed { height, piece ->
-                    val pieceCenter = pieceDisplay.getPieceCenter(tower, height)
-                    piece.getPolygon(pieceCenter.x, pieceCenter.y, scale).contains(e.point)
+                    val pieceCenter = boardDisplay.getPieceCenter(tower, height)
+                    piece.accept(PieceOutline, PosAndScale(pieceCenter, scale)).contains(e.point)
                 }
                 .lastOrNull()
-                ?.let { StackOfPartialTower(tower, it) }
+                ?.let { tower.stackFrom(it) }
         }
         return hoveredStack
     }

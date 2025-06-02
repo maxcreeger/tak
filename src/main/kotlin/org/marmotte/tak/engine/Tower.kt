@@ -1,9 +1,9 @@
 package org.marmotte.tak.engine
 
-data class Tower(
+class Tower(
     val pos: Pos,
-    val pieces: List<Piece> = emptyList(),
-) {
+    private val pieces: List<Piece> = emptyList(),
+): List<Piece> by pieces{
 
     val topPiece: Piece? by lazy {
         pieces.lastOrNull()
@@ -19,5 +19,17 @@ data class Tower(
 
     fun cutFrom(cutHeight: Int): Tower {
         return Tower(pos, pieces.subList(0, cutHeight))
+    }
+
+    override fun toString(): String {
+        return "Tower(pos=$pos,pieces=$pieces)"
+    }
+
+    fun stackFrom(height: Int): StackOfPartialTower {
+        return StackOfPartialTower(this, get(height))
+    }
+
+    fun stackFrom(piece: Piece): StackOfPartialTower {
+        return StackOfPartialTower(this, piece)
     }
 }

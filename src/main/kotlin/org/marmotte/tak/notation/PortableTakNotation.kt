@@ -113,13 +113,13 @@ class PortableTakNotation(val styles: List<PTNStyle> = emptyList()) : TakMoveNot
                 pieceType.isDigit() -> {
                     val nbPieces = pieceType.digitToInt()
                     val tower = board.towerAt(pos) ?: return null
-                    val fromPieceHeight = tower.pieces.size - nbPieces
-                    val fromPiece = tower.pieces[fromPieceHeight]
+                    val fromPieceHeight = tower.size - nbPieces
+                    val fromPiece = tower[fromPieceHeight]
                     val dir = match.groups[4]?.value?.first().toDir() ?: return null
                     val distrib = match.groups[5]?.value?.toCharArray()?.map(Char::digitToInt) ?: listOf(nbPieces)
                     StackMove(
                         player,
-                        StackOfPartialTower(tower, fromPiece),
+                        tower.stackFrom(fromPiece),
                         pos,
                         dir,
                         distrib

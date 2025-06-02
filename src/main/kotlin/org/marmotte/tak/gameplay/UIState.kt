@@ -21,10 +21,6 @@ class UIState {
     private val illegalMoveListener = mutableListOf<(MoveOutcome) -> Unit>()
     private val moveListeners = mutableListOf<(MoveOutcome) -> Unit>()
 
-    init {
-        board.randomize()
-    }
-
     fun apply(outcome: MoveOutcome) {
         if (!outcome.isLegal) {
             illegalMoveListener.forEach { it(outcome) }

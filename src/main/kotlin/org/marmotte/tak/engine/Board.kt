@@ -1,7 +1,5 @@
 package org.marmotte.tak.engine
 
-import kotlin.random.Random
-
 class Board(
     val size: Int,
     val activePlayer: Boolean = true,
@@ -85,7 +83,7 @@ class Board(
         )
     }
 
-    fun Pos.neighbours(player: Boolean): List<Pos> {
+    private fun Pos.neighbours(player: Boolean): List<Pos> {
         return listOf(
             Pair(0, 1),
             Pair(1, 0),
@@ -96,11 +94,11 @@ class Board(
                 towerAt(Pos(file + dFile, row + dRow))
             }
             .filter { it.topPiece?.player == player } // must be owned by the requested player
-            .filter { it.topPiece?.piece != PieceType.WALL } // Capstones & Roads count
+            .filter { it.topPiece !is Wall } // Capstones & Roads count
             .map { it.pos }
     }
 
-    fun checkConnectivity(player: Boolean, source: List<Pos>, target: List<Pos>): Boolean {
+    private fun checkConnectivity(player: Boolean, source: List<Pos>, target: List<Pos>): Boolean {
         val open = source.toMutableSet()
         val closed = mutableSetOf<Pos>()
         while (open.isNotEmpty()) {
@@ -131,7 +129,7 @@ class Board(
         }
 
         // detect board is filled or Reserve is exhausted
-        if (towers.all { it.pieces.isNotEmpty() } || whiteReserve.isExhausted() || blackReserve.isExhausted()) {
+        if (towers.all { it.isNotEmpty() } || whiteReserve.isExhausted() || blackReserve.isExhausted()) {
             // Count flat stones
             val flats = towers.mapNotNull { it.topPiece }.filterIsInstance<Road>() // Only visible Roads count
             val whiteFlats = flats.count { it.player }
@@ -145,18 +143,6 @@ class Board(
             }
         }
         GameStatus.ACTIVE
-    }
-
-    fun randomize() {
-        for (file in board) {
-            for (tower in file) {
-                val nbTiles = Random.nextInt(4) - 1
-                when {
-                    nbTiles < 0 -> tower.add(listOf(Wall(Random.nextBoolean())))
-                    nbTiles > 0 -> tower.add(List(nbTiles) { Road(Random.nextBoolean()) })
-                }
-            }
-        }
     }
 
     fun reserveOf(player: Boolean): Reserve = if (player) whiteReserve else blackReserve

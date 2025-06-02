@@ -13,7 +13,9 @@ data class Pos(
     companion object{
         fun file(index: Int): Char = 'A' + index
     }
+
     fun fileIndex() = file.uppercaseChar() - 'A'
+
     fun move(dir: Dir, nb: Int = 1): Pos {
         return when (dir) {
             NORTH -> Pos(file, row - nb)
@@ -35,10 +37,10 @@ data class Pos(
 
     fun distTo(other: Pos, dir: Dir): Int {
         return when (dir) {
-            NORTH -> if(file == other.file) max(other.row - row, 0) else 0
-            SOUTH -> if(file == other.file) max(row - other.row, 0) else 0
-            EAST -> if(row == other.row) max(file - other.file, 0) else 0
-            WEST -> if(row == other.row) max(other.file - file, 0) else 0
+            NORTH -> if(file == other.file) max(row - other.row, 0) else 0
+            SOUTH -> if(file == other.file) max(other.row - row, 0) else 0
+            EAST -> if(row == other.row) max(other.file - file, 0) else 0
+            WEST -> if(row == other.row) max(file - other.file, 0) else 0
         }
     }
 }

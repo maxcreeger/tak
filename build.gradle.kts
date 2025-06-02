@@ -4,7 +4,7 @@ plugins {
 }
 
 group = "org.marmotte.tak"
-version = "1.0.0"
+version = "1.0.1"
 
 repositories {
     mavenCentral()
@@ -12,6 +12,7 @@ repositories {
 
 dependencies {
     testImplementation(kotlin("test"))
+    testImplementation("io.mockk:mockk:1.14.2")
 }
 
 tasks.test {
